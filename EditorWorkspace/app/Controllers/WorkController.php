@@ -227,8 +227,8 @@ class WorkController extends Controller
         // upload file
         if ($request->image) {
             $fileWordBody = [
-                'usageType' => FileUsage::TYPE_POST,
                 'platformId' => 4,
+                'usageType' => FileUsage::TYPE_POST,
                 'tableName' => 'posts',
                 'tableColumn' => 'id',
                 'tableId' => $fresnsResp->getData('id'),
@@ -236,8 +236,9 @@ class WorkController extends Controller
                 'aid' => null,
                 'uid' => $uid,
                 'type' => File::TYPE_IMAGE,
-                'moreJson' => null,
                 'file' => $request->image,
+                'warningType' => null,
+                'moreInfo' => null,
             ];
 
             \FresnsCmdWord::plugin('Fresns')->uploadFile($fileWordBody);
