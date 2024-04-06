@@ -63,8 +63,8 @@ class StorageHelper
 
         $fileName = $file->name;
         $filePath = $file->path;
-        $fileUrl = null;
 
+        $fileUrl = null;
         switch ($type) {
             case 'imageConfigUrl':
                 $configs = ConfigHelper::fresnsConfigByItemKeys([
@@ -157,6 +157,8 @@ class StorageHelper
                     'video_poster_parameter',
                 ]);
                 $videoPosterPath = $file->video_poster_path;
+
+                $fileUrl = $videoPosterPath ? StrHelper::qualifyUrl($videoPosterPath, $storageConfig['bucketDomain']) : null;
                 break;
 
             case 'audioUrl':

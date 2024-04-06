@@ -86,6 +86,7 @@ class ApiController extends Controller
             'mime' => $request->mime,
             'extension' => $request->extension,
             'size' => $request->size,
+            'sha' => $request->sha,
             'shaType' => $request->shaType,
             'path' => $path,
             'imageWidth' => $request->width,

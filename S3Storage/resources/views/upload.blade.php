@@ -43,40 +43,9 @@
             numberFiles = files.length;
 
             Array.from(files).forEach(file => {
-                if (!validateFile(file)) {
-                    return;
-                }
-
                 getFileData(file);
             });
         });
-
-        // validate file
-        function validateFile(file) {
-            let extensions = $('input[name="extensions"]').val().split(','),
-                maxSize = parseInt($('input[name="maxSize"]').val()),
-                maxDuration = parseInt($('input[name="maxDuration"]').val());
-
-            let fileName = file.name;
-            let fileExtension = file.name.split('.').pop();
-            let tipMessage;
-
-            if (!extensions.includes(fileExtension)) {
-                tipMessage = '[' + fileName + "] {{ $fsCodeMessage['36310'] }}";
-                tips(tipMessage, true);
-
-                return false;
-            }
-
-            if (file.size > maxSize * 1024 * 1024) {
-                tipMessage = '[' + fileName + "] {{ $fsCodeMessage['36113'] }}";
-                tips(tipMessage, true);
-
-                return false;
-            }
-
-            return true;
-        }
 
         // get file data
         function getFileData(file) {
@@ -84,6 +53,10 @@
 
             function proceedWithUpload(fileType, fileData) {
                 console.log('fileData', fileType, fileData);
+
+                if (!validateFile(fileData)) {
+                    return;
+                }
 
                 getUploadToken(fileData, file);
             }
@@ -140,6 +113,42 @@
             // upload file
             proceedWithUpload(fileType, fileData);
         };
+
+        // validate file data
+        function validateFile(fileData) {
+            let extensions = $('input[name="extensions"]').val().split(','),
+                maxSize = parseInt($('input[name="maxSize"]').val()),
+                maxDuration = parseInt($('input[name="maxDuration"]').val());
+
+            let fileName = fileData.name;
+            let fileExtension = fileData.extension;
+            let fileSize = fileData.size;
+            let fileDuration = fileData.duration;
+            let tipMessage;
+
+            if (!extensions.includes(fileExtension)) {
+                tipMessage = '[' + fileName + "] {{ $fsCodeMessage['36310'] }}";
+                tips(tipMessage, true);
+
+                return false;
+            }
+
+            if (fileSize > maxSize * 1024 * 1024) {
+                tipMessage = '[' + fileName + "] {{ $fsCodeMessage['36113'] }}";
+                tips(tipMessage, true);
+
+                return false;
+            }
+
+            if (maxDuration && fileDuration > maxDuration) {
+                tipMessage = '[' + fileName + "] {{ $fsCodeMessage['36114'] }}";
+                tips(tipMessage, true);
+
+                return false;
+            }
+
+            return true;
+        }
 
         // get upload token
         function getUploadToken(fileData, file) {
