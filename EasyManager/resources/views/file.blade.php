@@ -81,11 +81,11 @@
                                 @break
 
                                 @case(2)
-                                    {{ __('EasyManager::fresns.table_video_time') }}: {{ $file->video_time }} {{ __('EasyManager::fresns.unit_second') }} | {{ __('EasyManager::fresns.table_transcoding_state') }}: {{ $file->transcoding_state }}
+                                    {{ __('EasyManager::fresns.table_video_duration') }}: {{ $file->video_duration }} {{ __('EasyManager::fresns.unit_second') }} | {{ __('EasyManager::fresns.table_transcoding_state') }}: {{ $file->transcoding_state }}
                                 @break
 
                                 @case(3)
-                                    {{ __('EasyManager::fresns.table_audio_time') }}: {{ $file->audio_time }} {{ __('EasyManager::fresns.unit_second') }} | {{ __('EasyManager::fresns.table_transcoding_state') }}: {{ $file->transcoding_state }}
+                                    {{ __('EasyManager::fresns.table_audio_duration') }}: {{ $file->audio_duration }} {{ __('EasyManager::fresns.unit_second') }} | {{ __('EasyManager::fresns.table_transcoding_state') }}: {{ $file->transcoding_state }}
                                 @break
 
                                 @default

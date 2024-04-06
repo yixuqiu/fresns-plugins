@@ -89,8 +89,8 @@ return [
     'table_file_parameters' => 'Parameters',
     'table_file_upload_time' => 'Upload Time',
     'table_image_size' => 'Image Size',
-    'table_video_time' => 'Video Time',
-    'table_audio_time' => 'Audio Time',
+    'table_video_duration' => 'Video Duration',
+    'table_audio_duration' => 'Audio Duration',
     'table_transcoding_state' => 'Transcoding State',
 
     'cache_description' => 'Cache tags are not supported when using the file, dynamodb, or database cache drivers.',

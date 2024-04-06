@@ -89,8 +89,8 @@ return [
     'table_file_parameters' => '参数',
     'table_file_upload_time' => '上传时间',
     'table_image_size' => '图片尺寸',
-    'table_video_time' => '视频时长',
-    'table_audio_time' => '音频时长',
+    'table_video_duration' => '视频时长',
+    'table_audio_duration' => '音频时长',
     'table_transcoding_state' => '转码状态',
 
     'cache_description' => '使用 file、dynamodb 或 database 缓存驱动程序时不支持缓存标记。',
