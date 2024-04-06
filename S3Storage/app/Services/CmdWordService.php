@@ -8,8 +8,15 @@
 
 namespace Plugins\S3Storage\Services;
 
+use App\Fresns\Words\File\DTO\GetAntiLinkFileInfoDTO;
+use App\Fresns\Words\File\DTO\GetAntiLinkFileInfoListDTO;
+use App\Fresns\Words\File\DTO\GetAntiLinkFileOriginalUrlDTO;
+use App\Fresns\Words\File\DTO\GetUploadTokenDTO;
+use App\Fresns\Words\File\DTO\LogicalDeletionFilesDTO;
+use App\Fresns\Words\File\DTO\PhysicalDeletionFilesDTO;
+use App\Fresns\Words\File\DTO\UploadFileDTO;
 use App\Helpers\CacheHelper;
-use App\Helpers\ConfigHelper;
+use App\Helpers\FileHelper;
 use App\Helpers\PrimaryHelper;
 use App\Helpers\StrHelper;
 use App\Models\File;
@@ -19,14 +26,6 @@ use App\Utilities\FileUtility;
 use Fresns\CmdWordManager\Traits\CmdWordResponseTrait;
 use Illuminate\Support\Facades\Storage;
 use Plugins\S3Storage\Helpers\StorageHelper;
-use Plugins\S3Storage\Services\DTO\GetAntiLinkFileInfoDTO;
-use Plugins\S3Storage\Services\DTO\GetAntiLinkFileInfoListDTO;
-use Plugins\S3Storage\Services\DTO\GetAntiLinkFileOriginalUrlDTO;
-use Plugins\S3Storage\Services\DTO\GetUploadTokenDTO;
-use Plugins\S3Storage\Services\DTO\LogicalDeletionFilesDTO;
-use Plugins\S3Storage\Services\DTO\PhysicalDeletionFilesDTO;
-use Plugins\S3Storage\Services\DTO\UploadFileDTO;
-use Plugins\S3Storage\Services\DTO\UploadFileInfoDTO;
 
 class CmdWordService
 {
@@ -35,12 +34,25 @@ class CmdWordService
     // getUploadToken
     public function getUploadToken($wordBody)
     {
+        /**
+         * S3 upload are not supported by the storage provider.
+         */
+        // return $this->failure(32104, ConfigUtility::getCodeMessage(32104));
+
         $dtoWordBody = new GetUploadTokenDTO($wordBody);
 
+        StorageHelper::buildDisk($dtoWordBody->type);
+
+        $expiration = now()->addMinutes($dtoWordBody->minutes)->setTimezone('UTC');
+
+        $presignedUrl = Storage::temporaryUploadUrl($dtoWordBody->path, $expiration);
+
         $data = [
-            'storageId' => File::STORAGE_UNKNOWN,
-            'token' => null,
-            'expireTime' => null,
+            'method' => 'PUT',
+            'url' => $presignedUrl['url'],
+            'headers' => $presignedUrl['headers'],
+            'activeMinutes' => $dtoWordBody->minutes,
+            'expiration' => date('Y-m-d H:i:s', strtotime($expiration)),
         ];
 
         return $this->success($data);
@@ -51,7 +63,7 @@ class CmdWordService
     {
         $dtoWordBody = new UploadFileDTO($wordBody);
 
-        $diskConfig = StorageHelper::disk($dtoWordBody->type);
+        $diskConfig = StorageHelper::diskConfig($dtoWordBody->type);
 
         $bodyInfo = [
             'platformId' => $dtoWordBody->platformId,
@@ -63,44 +75,17 @@ class CmdWordService
             'aid' => $dtoWordBody->aid,
             'uid' => $dtoWordBody->uid,
             'type' => $dtoWordBody->type,
-            'disk' => 'remote',
-            'imageHandlePosition' => null,
-            'moreJson' => $dtoWordBody->moreJson,
+            'warningType' => $dtoWordBody->warningType,
+            'moreInfo' => $dtoWordBody->moreInfo,
         ];
 
-        $fileInfo = FileUtility::uploadFile($bodyInfo, $diskConfig, $dtoWordBody->file);
+        $fileModel = FileUtility::uploadFile($bodyInfo, $diskConfig, $dtoWordBody->file);
+
+        $fileInfo = FileHelper::fresnsFileInfoById($fileModel->fid, $bodyInfo);
 
         if (empty($fileInfo)) {
-            $langTag = \request()->header('X-Fresns-Client-Lang-Tag', ConfigHelper::fresnsConfigDefaultLangTag());
-
-            return $this->failure(
-                32104,
-                ConfigUtility::getCodeMessage(32104, 'Fresns', $langTag)
-            );
+            return $this->failure(32104, ConfigUtility::getCodeMessage(32104));
         }
-
-        return $this->success($fileInfo);
-    }
-
-    // uploadFileInfo
-    public function uploadFileInfo($wordBody)
-    {
-        $dtoWordBody = new UploadFileInfoDTO($wordBody);
-
-        $bodyInfo = [
-            'platformId' => $dtoWordBody->platformId,
-            'usageType' => $dtoWordBody->usageType,
-            'tableName' => $dtoWordBody->tableName,
-            'tableColumn' => $dtoWordBody->tableColumn,
-            'tableId' => $dtoWordBody->tableId,
-            'tableKey' => $dtoWordBody->tableKey,
-            'aid' => $dtoWordBody->aid,
-            'uid' => $dtoWordBody->uid,
-            'type' => $dtoWordBody->type,
-            'fileInfo' => $dtoWordBody->fileInfo,
-        ];
-
-        $fileInfo = FileUtility::uploadFileInfo($bodyInfo);
 
         return $this->success($fileInfo);
     }
@@ -110,7 +95,7 @@ class CmdWordService
     {
         $dtoWordBody = new GetAntiLinkFileInfoDTO($wordBody);
 
-        $fileInfo = StorageHelper::info($dtoWordBody->fileIdOrFid);
+        $fileInfo = StorageHelper::fileInfo($dtoWordBody->fileIdOrFid);
 
         return $this->success($fileInfo);
     }
@@ -122,7 +107,7 @@ class CmdWordService
 
         $data = [];
         foreach ($dtoWordBody->fileIdsOrFids as $id) {
-            $data[] = StorageHelper::info($id);
+            $data[] = StorageHelper::fileInfo($id);
         }
 
         return $this->success($data);
@@ -139,7 +124,7 @@ class CmdWordService
             $file = PrimaryHelper::fresnsModelByFsid('file', $dtoWordBody->fileIdOrFid);
         }
 
-        $originalUrl = StorageHelper::url($file, 'originalUrl');
+        $originalUrl = StorageHelper::fileUrl($file, 'originalUrl');
 
         return $this->success([
             'originalUrl' => $originalUrl,
@@ -162,8 +147,7 @@ class CmdWordService
         $dtoWordBody = new PhysicalDeletionFilesDTO($wordBody);
 
         // Storage disk
-        $diskConfig = StorageHelper::disk($dtoWordBody->type);
-        $fresnsStorage = Storage::build($diskConfig);
+        StorageHelper::buildDisk($dtoWordBody->type);
 
         foreach ($dtoWordBody->fileIdsOrFids as $id) {
             if (StrHelper::isPureInt($id)) {
@@ -178,18 +162,18 @@ class CmdWordService
 
             FileUsage::where('file_id', $file->id)->delete();
 
+            $deleteStatus = Storage::delete($file->path);
+
+            if (! $deleteStatus) {
+                return $this->failure(21006);
+            }
+
             if ($file->type == File::TYPE_VIDEO && $file->video_poster_path) {
-                // code
+                Storage::delete($file->video_poster_path);
             }
 
             if ($file->original_path) {
-                // code
-            }
-
-            $fileDelete = $fresnsStorage->delete($file->path);
-
-            if (! $fileDelete) {
-                return $this->failure(21006);
+                Storage::delete($file->original_path);
             }
 
             $file->update([
@@ -199,14 +183,7 @@ class CmdWordService
             $file->delete();
 
             // forget cache
-            CacheHelper::forgetFresnsFileUsage($file->id);
-            CacheHelper::forgetFresnsKeys([
-                "fresns_s3_storage_antilink_{$file->id}",
-                "fresns_s3_storage_antilink_{$file->fid}",
-            ], [
-                'fresnsPlugins',
-                'pluginS3Storage',
-            ]);
+            CacheHelper::clearDataCache('file', $file->fid);
         }
 
         return $this->success();

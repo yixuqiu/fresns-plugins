@@ -19,4 +19,5 @@ S3 storage, available from any storage service that supports the S3 protocol.
 | Bucket Name | AWS_BUCKET |
 | Bucket Region | AWS_DEFAULT_REGION |
 | Bucket Domain | AWS_URL or AWS_ENDPOINT |
+| Filesystem Disk | `remote` |
 | Anti Link Key | AWS_ENDPOINT |

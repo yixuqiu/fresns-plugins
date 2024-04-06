@@ -10,14 +10,14 @@ namespace Plugins\S3Storage\Providers;
 
 use Illuminate\Support\ServiceProvider;
 
-class S3StorageServiceProvider extends ServiceProvider
+class PluginServiceProvider extends ServiceProvider
 {
     /**
      * Boot the application events.
      */
     public function boot(): void
     {
-        //
+        $this->registerViews();
     }
 
     /**
@@ -25,6 +25,14 @@ class S3StorageServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->register(RouteServiceProvider::class);
+    }
+
+    /**
+     * Register views.
+     */
+    public function registerViews(): void
+    {
+        $this->loadViewsFrom(dirname(__DIR__, 2).'/resources/views', 'S3Storage');
     }
 }
