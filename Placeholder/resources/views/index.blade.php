@@ -69,54 +69,17 @@
     </table>
 
     <script src="//res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
+    <script src="/static/js/fresns-callback.js"></script>
     <script>
-        const fresnsCallbackMessage = {
-            code: 0,
-            message: 'ok',
-            action: {
-                postMessageKey: 'test',
-                windowClose: false,
-                redirectUrl: '',
-                dataHandler: '',
-            },
-            data: '',
-        }
+        let callbackAction = {
+            postMessageKey: 'test',
+            windowClose: false,
+            redirectUrl: '',
+            dataHandler: '',
+        };
 
-        const messageString = JSON.stringify(fresnsCallbackMessage);
-        const userAgent = navigator.userAgent.toLowerCase();
-
-        console.log('userAgent', userAgent);
-
-        switch (true) {
-            case (window.Android !== undefined):
-                // Android (addJavascriptInterface)
-                window.Android.receiveMessage(messageString);
-                break;
-
-            case (window.webkit && window.webkit.messageHandlers.iOSHandler !== undefined):
-                // iOS (WKScriptMessageHandler)
-                window.webkit.messageHandlers.iOSHandler.postMessage(messageString);
-                break;
-
-            case (window.FresnsJavascriptChannel !== undefined):
-                // Flutter
-                window.FresnsJavascriptChannel.postMessage(messageString);
-                break;
-
-            case (window.ReactNativeWebView !== undefined):
-                // React Native WebView
-                window.ReactNativeWebView.postMessage(messageString);
-                break;
-
-            case (userAgent.indexOf('miniprogram') > -1):
-                // WeChat Mini Program
-                wx.miniProgram.postMessage({ data: messageString });
-                break;
-
-            // Web
-            default:
-                parent.postMessage(messageString, '*');
-        }
+        // /static/js/fresns-callback.js
+        FresnsCallback.send(callbackAction);
     </script>
 </body>
 
