@@ -24,7 +24,7 @@ class MailService
                 'account' => $account,
                 'template_id' => $templateId,
                 'code' => $code,
-                'expired_at' => now()->addSeconds(10),
+                'expired_at' => now()->addMinutes(15),
             ];
 
             $verifyCode = VerifyCode::create($data);
