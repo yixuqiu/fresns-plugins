@@ -21,7 +21,7 @@ use Intervention\Image\ImageManager;
 class TranscodeHelper
 {
     // image processing
-    public static function imageProcessing(UploadedFile $file, array $fileInfo)
+    public static function imageProcessing(UploadedFile $file, FileModel $fileModel)
     {
         if (! $file) {
             return;
@@ -44,7 +44,6 @@ class TranscodeHelper
 
         $localStorage = Storage::build(config('filesystems.disks.local'));
         $publicStorage = Storage::build(config('filesystems.disks.public'));
-        $fileModel = FileModel::where('fid', $fileInfo['fid'])->first();
 
         // file path
         $filePath = $publicStorage->path($fileModel->path);

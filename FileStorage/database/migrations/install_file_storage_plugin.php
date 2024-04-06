@@ -17,55 +17,46 @@ return new class extends Migration
             'item_key' => 'filestorage_image_driver',
             'item_value' => 'local', // local, ftp, sftp
             'item_type' => 'string',
-            'item_tag' => 'filestorage',
         ],
         [
             'item_key' => 'filestorage_image_private_key',
             'item_value' => null,
             'item_type' => 'string',
-            'item_tag' => 'filestorage',
         ],
         [
             'item_key' => 'filestorage_image_passphrase',
             'item_value' => null,
             'item_type' => 'string',
-            'item_tag' => 'filestorage',
         ],
         [
             'item_key' => 'filestorage_image_host_fingerprint',
             'item_value' => null,
             'item_type' => 'string',
-            'item_tag' => 'filestorage',
         ],
         [
             'item_key' => 'filestorage_image_processing_status',
             'item_value' => 'open',
             'item_type' => 'string',
-            'item_tag' => 'filestorage',
         ],
         [
             'item_key' => 'filestorage_image_processing_library',
             'item_value' => 'gd',
             'item_type' => 'string',
-            'item_tag' => 'filestorage',
         ],
         [
             'item_key' => 'filestorage_image_processing_params',
             'item_value' => '{"config":400,"ratio":400,"square":200,"big":1500}',
             'item_type' => 'object',
-            'item_tag' => 'filestorage',
         ],
         [
             'item_key' => 'filestorage_image_watermark_file',
             'item_value' => null,
             'item_type' => 'file',
-            'item_tag' => 'filestorage',
         ],
         [
             'item_key' => 'filestorage_image_watermark_position',
             'item_value' => 'top-left',
             'item_type' => 'string',
-            'item_tag' => 'filestorage',
         ],
 
         // video
@@ -73,25 +64,21 @@ return new class extends Migration
             'item_key' => 'filestorage_video_driver',
             'item_value' => 'local', // local, ftp, sftp
             'item_type' => 'string',
-            'item_tag' => 'filestorage',
         ],
         [
             'item_key' => 'filestorage_video_private_key',
             'item_value' => null,
             'item_type' => 'string',
-            'item_tag' => 'filestorage',
         ],
         [
             'item_key' => 'filestorage_video_passphrase',
             'item_value' => null,
             'item_type' => 'string',
-            'item_tag' => 'filestorage',
         ],
         [
             'item_key' => 'filestorage_video_host_fingerprint',
             'item_value' => null,
             'item_type' => 'string',
-            'item_tag' => 'filestorage',
         ],
 
         // audio
@@ -99,25 +86,21 @@ return new class extends Migration
             'item_key' => 'filestorage_audio_driver',
             'item_value' => 'local', // local, ftp, sftp
             'item_type' => 'string',
-            'item_tag' => 'filestorage',
         ],
         [
             'item_key' => 'filestorage_audio_private_key',
             'item_value' => null,
             'item_type' => 'string',
-            'item_tag' => 'filestorage',
         ],
         [
             'item_key' => 'filestorage_audio_passphrase',
             'item_value' => null,
             'item_type' => 'string',
-            'item_tag' => 'filestorage',
         ],
         [
             'item_key' => 'filestorage_audio_host_fingerprint',
             'item_value' => null,
             'item_type' => 'string',
-            'item_tag' => 'filestorage',
         ],
 
         // document
@@ -125,25 +108,21 @@ return new class extends Migration
             'item_key' => 'filestorage_document_driver',
             'item_value' => 'local', // local, ftp, sftp
             'item_type' => 'string',
-            'item_tag' => 'filestorage',
         ],
         [
             'item_key' => 'filestorage_document_private_key',
             'item_value' => null,
             'item_type' => 'string',
-            'item_tag' => 'filestorage',
         ],
         [
             'item_key' => 'filestorage_document_passphrase',
             'item_value' => null,
             'item_type' => 'string',
-            'item_tag' => 'filestorage',
         ],
         [
             'item_key' => 'filestorage_document_host_fingerprint',
             'item_value' => null,
             'item_type' => 'string',
-            'item_tag' => 'filestorage',
         ],
     ];
 

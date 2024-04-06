@@ -72,10 +72,10 @@ class FileHelper
     // get file info
     public static function info(string $fileIdOrFid): int|array
     {
-        $cacheKey = 'fresns_file_storage_antilink_'.$fileIdOrFid;
-        $cacheTags = ['fresnsPlugins', 'pluginFileStorage'];
+        $cacheKey = 'fresns_file_info_'.$fileIdOrFid;
+        $cacheTag = 'fresnsFiles';
 
-        $fileInfo = FresnsCacheHelper::get($cacheKey, $cacheTags);
+        $fileInfo = FresnsCacheHelper::get($cacheKey, $cacheTag);
         if (empty($fileInfo)) {
             if (StrHelper::isPureInt($fileIdOrFid)) {
                 $file = File::where('id', $fileIdOrFid)->first();
@@ -98,11 +98,7 @@ class FileHelper
 
             foreach ($keys as $key) {
                 if ($key == 'documentPreviewUrl') {
-                    $documentUrl = $file->getFileUrl();
-
-                    $antiLinkUrl = FileHelper::url($fileInfo['fid'], $key);
-
-                    $fileInfo[$key] = FresnsFileHelper::fresnsFileDocumentPreviewUrl($antiLinkUrl, $file->fid, $file->extension);
+                    $fileInfo['documentPreviewUrl'] = FresnsFileHelper::fresnsFileDocumentPreviewUrl($file->extension);
 
                     continue;
                 }
@@ -115,7 +111,7 @@ class FileHelper
             }
 
             $cacheTime = FresnsCacheHelper::fresnsCacheTimeByFileType($file->type, null, 2);
-            FresnsCacheHelper::put($fileInfo, $cacheKey, $cacheTags, null, $cacheTime);
+            FresnsCacheHelper::put($fileInfo, $cacheKey, $cacheTag, null, $cacheTime);
         }
 
         return $fileInfo;

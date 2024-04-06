@@ -232,7 +232,6 @@ class AdminController extends Controller
             ], [
                 'item_value' => $request->driver,
                 'item_type' => 'string',
-                'item_tag' => 'filestorage',
             ]);
         }
 
@@ -242,7 +241,6 @@ class AdminController extends Controller
             ], [
                 'item_value' => $request->privateKey,
                 'item_type' => 'string',
-                'item_tag' => 'filestorage',
             ]);
         }
 
@@ -252,7 +250,6 @@ class AdminController extends Controller
             ], [
                 'item_value' => $request->passphrase,
                 'item_type' => 'string',
-                'item_tag' => 'filestorage',
             ]);
         }
 
@@ -262,7 +259,6 @@ class AdminController extends Controller
             ], [
                 'item_value' => $request->hostFingerprint,
                 'item_type' => 'string',
-                'item_tag' => 'filestorage',
             ]);
         }
 
@@ -273,7 +269,6 @@ class AdminController extends Controller
             ], [
                 'item_value' => $request->imageProcessingStatus,
                 'item_type' => 'string',
-                'item_tag' => 'filestorage',
             ]);
         }
         if ($request->imageProcessingLibrary) {
@@ -282,7 +277,6 @@ class AdminController extends Controller
             ], [
                 'item_value' => $request->imageProcessingLibrary,
                 'item_type' => 'string',
-                'item_tag' => 'filestorage',
             ]);
         }
 
@@ -292,7 +286,6 @@ class AdminController extends Controller
             ], [
                 'item_value' => $request->imageProcessingParams,
                 'item_type' => 'object',
-                'item_tag' => 'filestorage',
             ]);
         }
 
@@ -305,20 +298,17 @@ class AdminController extends Controller
                 'tableId' => null,
                 'tableKey' => 'filestorage_image_watermark_file',
                 'type' => File::TYPE_IMAGE,
-                'disk' => 'local',
-                'moreJson' => null,
+                'warningType' => null,
+                'moreInfo' => null,
             ];
 
-            $fileInfo = FileUtility::uploadFile($bodyInfo, config('filesystems.disks.public'), $request->imageWatermarkFile);
-
-            $file = File::where('fid', $fileInfo['fid'])->first();
+            $fileModel = FileUtility::uploadFile($bodyInfo, config('filesystems.disks.public'), $request->imageWatermarkFile);
 
             Config::updateOrCreate([
                 'item_key' => 'filestorage_image_watermark_file',
             ], [
-                'item_value' => $file?->id,
+                'item_value' => $fileModel?->id,
                 'item_type' => 'file',
-                'item_tag' => 'filestorage',
             ]);
         }
 
@@ -328,7 +318,6 @@ class AdminController extends Controller
             ], [
                 'item_value' => $request->imageWatermarkConfig,
                 'item_type' => 'object',
-                'item_tag' => 'filestorage',
             ]);
         }
 
@@ -360,9 +349,9 @@ class AdminController extends Controller
             'tableId' => null,
             'tableKey' => 'FileStorage',
             'type' => $type,
-            'disk' => 'local',
-            'moreJson' => null,
             'file' => $request->file,
+            'warningType' => null,
+            'moreInfo' => null,
         ];
 
         $fresnsResp = \FresnsCmdWord::plugin('FileStorage')->uploadFile($wordBody);

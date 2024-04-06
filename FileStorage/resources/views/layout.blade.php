@@ -76,7 +76,9 @@
         var yearElement = document.querySelector('.copyright-year');
         var currentDate = new Date();
         var currentYear = currentDate.getFullYear();
-        yearElement.textContent = currentYear;
+        if (yearElement) {
+            yearElement.textContent = currentYear;
+        }
 
         // set timeout toast hide
         const setTimeoutToastHide = () => {
@@ -87,6 +89,19 @@
             });
         };
         setTimeoutToastHide();
+
+        // spinner
+        $(document).on('submit', 'form', function () {
+            var btn = $(this).find('button[type="submit"]');
+
+            btn.find('i').remove();
+
+            btn.prop('disabled', true);
+            if (btn.children('.spinner-border').length == 0) {
+                btn.prepend('<span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span> ');
+            }
+            btn.children('.spinner-border').removeClass('d-none');
+        });
     </script>
     @stack('script')
 </body>
