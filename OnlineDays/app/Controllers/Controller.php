@@ -17,7 +17,7 @@ class Controller extends BaseController
 
     public function __construct()
     {
-        $locale = \request()->cookie('fresns_panel_lang');
+        $locale = \request()->cookie('fresns_panel_locale');
         $this->locale = $locale;
         config(['app.locale' => $locale]);
         View::share('locale', $locale);

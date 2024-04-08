@@ -36,7 +36,7 @@ class WebController extends Controller
             'fresnsemail_from_name',
         ])->pluck('item_value', 'item_key');
 
-        $locale = \request()->cookie('fresns_panel_lang');
+        $locale = \request()->cookie('fresns_panel_locale');
 
         return view('SmtpEmail::setting', compact('content', 'version', 'marketUrl', 'locale'));
     }

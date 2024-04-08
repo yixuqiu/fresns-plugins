@@ -25,7 +25,6 @@
                     </th>
                     <th scope="col">{{ __('EasyManager::fresns.table_name') }}</th>
                     <th scope="col">{{ __('EasyManager::fresns.table_file_size') }}</th>
-                    <th scope="col">md5</th>
                     <th scope="col">sha</th>
                     <th scope="col">{{ __('EasyManager::fresns.table_file_sha_type') }}</th>
                     <th scope="col">{{ __('EasyManager::fresns.table_file_parameters') }}</th>
@@ -71,21 +70,20 @@
                         </td>
                         <td>{{ $file->name }}</td>
                         <td>{{ $file->size }}</td>
-                        <td>{{ $file->md5 }}</td>
                         <td>{{ $file->sha }}</td>
                         <td>{{ $file->sha_type }}</td>
                         <td>
                             @switch($file->type)
                                 @case(1)
-                                    {{ __('EasyManager::fresns.table_image_size') }}: {{ $file->image_width }}x{{ $file->image_height }}
+                                    {{ __('EasyManager::fresns.table_image_size') }}: {{ $file->width }}x{{ $file->height }}
                                 @break
 
                                 @case(2)
-                                    {{ __('EasyManager::fresns.table_video_duration') }}: {{ $file->video_duration }} {{ __('EasyManager::fresns.unit_second') }} | {{ __('EasyManager::fresns.table_transcoding_state') }}: {{ $file->transcoding_state }}
+                                    {{ __('EasyManager::fresns.table_video_duration') }}: {{ $file->duration }} {{ __('EasyManager::fresns.unit_second') }} | {{ __('EasyManager::fresns.table_transcoding_state') }}: {{ $file->transcoding_state }}
                                 @break
 
                                 @case(3)
-                                    {{ __('EasyManager::fresns.table_audio_duration') }}: {{ $file->audio_duration }} {{ __('EasyManager::fresns.unit_second') }} | {{ __('EasyManager::fresns.table_transcoding_state') }}: {{ $file->transcoding_state }}
+                                    {{ __('EasyManager::fresns.table_audio_duration') }}: {{ $file->duration }} {{ __('EasyManager::fresns.unit_second') }} | {{ __('EasyManager::fresns.table_transcoding_state') }}: {{ $file->transcoding_state }}
                                 @break
 
                                 @default
