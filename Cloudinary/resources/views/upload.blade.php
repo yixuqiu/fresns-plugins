@@ -12,6 +12,7 @@
                 <button class="btn btn-outline-secondary" type="submit" id="uploadSubmit">{{ $fsLang['uploadButton'] }}</button>
             </div>
 
+            {{-- progress bar --}}
             <div class="progress d-none" id="progressbar" role="progressbar" aria-label="Animated striped example" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100">
                 <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
             </div>
@@ -34,14 +35,42 @@
         var numberFiles = 0;
         var numberUploaded = 0;
 
+        var progressInterval;
+        var maxProgress = 90;
+
         // request
         $('.api-request-form').submit(function (e) {
             e.preventDefault();
+
             let form = $(this),
                 files = form.find('input[name=files]')[0].files;
 
             numberFiles = files.length;
+            numberUploaded = 0;
 
+            // progress bar
+            $('#progressbar').removeClass('d-none').attr('aria-valuenow', 0)
+            $('#progressbar').find('.progress-bar').css('width', '0%').text('0%');
+            clearInterval(progressInterval);
+
+            progressInterval = setInterval(function() {
+                var currentProgress = parseInt($('#progressbar').attr('aria-valuenow'));
+                var increment = maxProgress - currentProgress > 10 ? 10 : 1; // Slow down the rate of progress when approaching maximum progress
+                var newProgress = currentProgress + increment > maxProgress ? maxProgress : currentProgress + increment;
+
+                if(newProgress >= maxProgress || numberUploaded === numberFiles) {
+                    clearInterval(progressInterval);
+                    if(numberUploaded === numberFiles) {
+                        // Set the progress bar directly to 100% when all file uploads are complete
+                        newProgress = 100;
+                    }
+                }
+
+                $('#progressbar').attr('aria-valuenow', newProgress)
+                $('#progressbar').find('.progress-bar').css('width', newProgress + '%').text(newProgress + '%');
+            }, 500);
+
+            // upload
             Array.from(files).forEach(file => {
                 getFileData(file);
             });
@@ -57,6 +86,8 @@
                 if (!validateFile(fileData)) {
                     $('#uploadSubmit').prop('disabled', false);
                     $('#uploadSubmit').find('.spinner-border').remove();
+
+                    $('#progressbar').addClass('d-none');
 
                     return;
                 }
@@ -172,6 +203,8 @@
                         $('#uploadSubmit').prop('disabled', false);
                         $('#uploadSubmit').find('.spinner-border').remove();
 
+                        $('#progressbar').addClass('d-none');
+
                         return;
                     }
 
@@ -182,6 +215,8 @@
 
                     $('#uploadSubmit').prop('disabled', false);
                     $('#uploadSubmit').find('.spinner-border').remove();
+
+                    $('#progressbar').addClass('d-none');
                 },
             });
         };
@@ -206,23 +241,25 @@
                 success: function (res) {
                     numberUploaded++;
 
-                    let windowClose = numberFiles == numberUploaded;
+                    console.log('updateFileUploaded', uploadToken.fid, numberFiles, numberUploaded);
 
-                    console.log('updateFileUploaded', uploadToken.fid, windowClose, numberFiles, numberUploaded);
-
-                    updateFileUploaded(uploadToken.fid, windowClose);
+                    updateFileUploaded(uploadToken.fid);
                 },
                 error: function (e) {
                     tips(e.responseJSON.message, true);
 
                     $('#uploadSubmit').prop('disabled', false);
                     $('#uploadSubmit').find('.spinner-border').remove();
+
+                    $('#progressbar').addClass('d-none');
                 },
             });
         };
 
         // update file uploaded
-        function updateFileUploaded(fid, windowClose = false) {
+        function updateFileUploaded(fid) {
+            let lastUploaded = numberFiles == numberUploaded;
+
             $.ajax({
                 url: "{{ route('cloudinary.api.uploaded') }}",
                 type: 'patch',
@@ -238,7 +275,7 @@
                     // postMessage
                     let callbackAction = {
                         postMessageKey: '{{ $postMessageKey }}',
-                        windowClose: windowClose,
+                        windowClose: lastUploaded,
                         redirectUrl: '',
                         dataHandler: 'add',
                     };
@@ -250,9 +287,11 @@
                     tips(e.responseJSON.message, true);
                 },
                 complete: function (e) {
-                    if (windowClose) {
-                        $('#uploadSubmit').prop('disabled', false);
+                    if (lastUploaded) {
                         $('#uploadSubmit').find('.spinner-border').remove();
+
+                        $('#progressbar').attr('aria-valuenow', 100);
+                        $('#progressbar').find('.progress-bar').css('width', '100%').text('100%');
                     }
                 },
             });
