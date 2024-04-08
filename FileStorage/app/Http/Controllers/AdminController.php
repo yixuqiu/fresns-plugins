@@ -291,15 +291,18 @@ class AdminController extends Controller
 
         if ($request->imageWatermarkFile) {
             $bodyInfo = [
-                'platformId' => 4,
+                'type' => File::TYPE_IMAGE,
+                'warningType' => null,
+
                 'usageType' => FileUsage::TYPE_SYSTEM,
+                'platformId' => 4,
                 'tableName' => 'configs',
                 'tableColumn' => 'item_value',
                 'tableId' => null,
                 'tableKey' => 'filestorage_image_watermark_file',
-                'type' => File::TYPE_IMAGE,
-                'warningType' => null,
                 'moreInfo' => null,
+                'aid' => null,
+                'uid' => null,
             ];
 
             $fileModel = FileUtility::uploadFile($bodyInfo, config('filesystems.disks.public'), $request->imageWatermarkFile);

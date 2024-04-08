@@ -80,10 +80,10 @@ class TranscodeHelper
                 $watermarkFilePath = $publicStorage->path($watermarkFile->path);
 
                 if (file_exists($watermarkFilePath)) {
-                    $imageWidth = $fileModel->image_width / 2;
-                    $imageHeight = $fileModel->image_height / 2;
+                    $imageWidth = $fileModel->width / 2;
+                    $imageHeight = $fileModel->height / 2;
 
-                    if ($watermarkFile->image_width < $imageWidth || $watermarkFile->image_height < $imageHeight) {
+                    if ($watermarkFile->width < $imageWidth || $watermarkFile->height < $imageHeight) {
                         $big->place($watermarkFilePath, $params['watermarkPosition']);
                     }
                 }
