@@ -75,14 +75,7 @@ class WebController extends Controller
         };
 
         $fsLang = ConfigHelper::fresnsConfigLanguagePack($langTag);
-        $fsCodeMessage = [
-            '32105' => ConfigUtility::getCodeMessage(32105, 'Fresns', $langTag),
-            '36113' => ConfigUtility::getCodeMessage(36113, 'Fresns', $langTag),
-            '36114' => ConfigUtility::getCodeMessage(36114, 'Fresns', $langTag),
-            '36115' => ConfigUtility::getCodeMessage(36115, 'Fresns', $langTag),
-            '36310' => ConfigUtility::getCodeMessage(36310, 'Fresns', $langTag),
-        ];
 
-        return view('S3Storage::upload', compact('fileType', 'inputAccept', 'extensionNames', 'maxUploadNumber', 'maxSize', 'maxDuration', 'fsLang', 'fsCodeMessage'));
+        return view('S3Storage::upload', compact('fileType', 'inputAccept', 'extensionNames', 'maxUploadNumber', 'maxSize', 'maxDuration', 'fsLang'));
     }
 }

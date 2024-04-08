@@ -28,13 +28,9 @@ class ApiController extends Controller
     public function uploadToken(Request $request)
     {
         $platformId = Cookie::get('fresns_plugin_s3_storage_platform_id');
-        $langTag = Cookie::get('fresns_plugin_s3_storage_lang_tag');
         $authUid = Cookie::get('fresns_plugin_s3_storage_auth_uid');
         $usageType = Cookie::get('fresns_plugin_s3_storage_file_usage_type');
         $fileType = Cookie::get('fresns_plugin_s3_storage_file_type');
-
-        $request->headers->set('X-Fresns-Client-Lang-Tag', $langTag);
-        $request->headers->set('X-Fresns-Uid', $authUid);
 
         $typeInt = match ($fileType) {
             'image' => File::TYPE_IMAGE,
@@ -86,28 +82,18 @@ class ApiController extends Controller
             'mime' => $request->mime,
             'extension' => $request->extension,
             'size' => $request->size,
+            'width' => $request->width,
+            'height' => $request->height,
+            'duration' => $request->duration,
             'sha' => $request->sha,
             'shaType' => $request->shaType,
-            'path' => $path,
-            'imageWidth' => $request->width,
-            'imageHeight' => $request->height,
-            'audioDuration' => $request->duration,
-            'videoDuration' => $request->duration,
-            'videoPosterPath' => null,
-            'transcodingState' => File::TRANSCODING_STATE_WAIT,
-            'originalPath' => null,
             'warningType' => $warningType,
+            'path' => $path,
+            'transcodingState' => File::TRANSCODING_STATE_WAIT,
+            'videoPosterPath' => null,
+            'originalPath' => null,
             'uploaded' => false,
         ];
-
-        // more info
-        $moreInfo = null;
-        if ($request->moreInfo) {
-            try {
-                $moreInfo = json_decode($request->moreInfo, true);
-            } catch (\Exception $e) {
-            }
-        }
 
         $usageInfo = [
             'usageType' => $request->attributes->get('usageType'),
@@ -117,7 +103,7 @@ class ApiController extends Controller
             'tableId' => $request->attributes->get('tableId'),
             'tableKey' => $request->attributes->get('tableKey'),
             'sortOrder' => $request->sortOrder,
-            'moreInfo' => $moreInfo,
+            'moreInfo' => $request->moreInfo,
             'aid' => null,
             'uid' => $authUid,
             'remark' => null,

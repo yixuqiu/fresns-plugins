@@ -66,17 +66,18 @@ class CmdWordService
         $diskConfig = StorageHelper::diskConfig($dtoWordBody->type);
 
         $bodyInfo = [
-            'platformId' => $dtoWordBody->platformId,
+            'type' => $dtoWordBody->type,
+            'warningType' => $dtoWordBody->warningType,
+
             'usageType' => $dtoWordBody->usageType,
+            'platformId' => $dtoWordBody->platformId,
             'tableName' => $dtoWordBody->tableName,
             'tableColumn' => $dtoWordBody->tableColumn,
             'tableId' => $dtoWordBody->tableId,
             'tableKey' => $dtoWordBody->tableKey,
+            'moreInfo' => $dtoWordBody->moreInfo,
             'aid' => $dtoWordBody->aid,
             'uid' => $dtoWordBody->uid,
-            'type' => $dtoWordBody->type,
-            'warningType' => $dtoWordBody->warningType,
-            'moreInfo' => $dtoWordBody->moreInfo,
         ];
 
         $fileModel = FileUtility::uploadFile($bodyInfo, $diskConfig, $dtoWordBody->file);

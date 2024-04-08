@@ -36,7 +36,11 @@ class CheckAuth
             throw new ResponseException(30001);
         }
 
+        $langTag = Cookie::get('fresns_plugin_s3_storage_lang_tag');
         $authUid = Cookie::get('fresns_plugin_s3_storage_auth_uid');
+
+        $request->headers->set('X-Fresns-Client-Lang-Tag', $langTag);
+        $request->headers->set('X-Fresns-Uid', $authUid);
 
         // check upload perm
         $type = match ($fileType) {
@@ -58,7 +62,7 @@ class CheckAuth
         $permResp = \FresnsCmdWord::plugin('Fresns')->checkUploadPerm($wordBody);
 
         if ($permResp->isErrorResponse()) {
-            return $permResp->getErrorResponse();
+            throw new ResponseException($permResp->getCode());
         }
 
         // request attributes

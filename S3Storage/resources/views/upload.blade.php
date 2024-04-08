@@ -9,7 +9,7 @@
 
             <div class="input-group mb-3">
                 <input type="file" class="form-control" name="files" accept="{{ $inputAccept }}" @if($maxUploadNumber > 1) multiple="multiple" max="{{ $maxUploadNumber }}" @endif>
-                <button class="btn btn-outline-secondary" type="submit" id="uploadSubmit">{{ $fsLang['editorUploadButton'] }}</button>
+                <button class="btn btn-outline-secondary" type="submit" id="uploadSubmit">{{ $fsLang['uploadButton'] }}</button>
             </div>
 
             <div class="progress d-none" id="progressbar" role="progressbar" aria-label="Animated striped example" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100">
@@ -17,15 +17,15 @@
             </div>
         </form>
 
-        <div class="form-text mt-3 text-break">{{ $fsLang['editorUploadTipExtensions'] }}: {{ $extensionNames }}</div>
+        <div class="form-text mt-3 text-break">{{ $fsLang['uploadTipExtensions'] }}: {{ $extensionNames }}</div>
 
-        <div class="form-text mt-2">{{ $fsLang['editorUploadTipMaxSize'] }}: {{ $maxSize }} MB</div>
+        <div class="form-text mt-2">{{ $fsLang['uploadTipMaxSize'] }}: {{ $maxSize }} MB</div>
 
         @if ($fileType == 'video' || $fileType == 'audio')
-            <div class="form-text mt-2">{{ $fsLang['editorUploadTipMaxDuration'] }}: {{ $maxDuration }} {{ $fsLang['unitSecond'] }}</div>
+            <div class="form-text mt-2">{{ $fsLang['uploadTipMaxDuration'] }}: {{ $maxDuration }} {{ $fsLang['unitSecond'] }}</div>
         @endif
 
-        <div class="form-text mt-2">{{ $fsLang['editorUploadTipMaxNumber'] }}: {{ $maxUploadNumber }}</div>
+        <div class="form-text mt-2">{{ $fsLang['uploadTipMaxNumber'] }}: {{ $maxUploadNumber }}</div>
     </div>
 @endsection
 
@@ -55,10 +55,13 @@
                 console.log('fileData', fileType, fileData);
 
                 if (!validateFile(fileData)) {
+                    $('#uploadSubmit').prop('disabled', false);
+                    $('#uploadSubmit').find('.spinner-border').remove();
+
                     return;
                 }
 
-                getUploadToken(fileData, file);
+                makeUploadToken(fileData, file);
             }
 
             let fileData = {
@@ -79,7 +82,9 @@
                 image.onload = function() {
                     fileData.width = this.naturalWidth;
                     fileData.height = this.naturalHeight;
-                    URL.revokeObjectURL(this.src);  // Clean up memory
+
+                    // clean up memory
+                    URL.revokeObjectURL(this.src);
 
                     // upload file
                     proceedWithUpload(fileType, fileData);
@@ -96,8 +101,12 @@
                 const media = document.createElement(fileType);
                 media.preload = 'metadata';
                 media.onloadedmetadata = function() {
+                    fileData.width = fileType == 'video' ? media.videoWidth : null;
+                    fileData.height = fileType == 'video' ? media.videoHeight : null;
                     fileData.duration = Math.round(media.duration);
-                    URL.revokeObjectURL(this.src);  // Clean up memory
+
+                    // clean up memory
+                    URL.revokeObjectURL(this.src);
 
                     // upload file
                     proceedWithUpload(fileType, fileData);
@@ -127,21 +136,21 @@
             let tipMessage;
 
             if (!extensions.includes(fileExtension)) {
-                tipMessage = '[' + fileName + "] {{ $fsCodeMessage['36310'] }}";
+                tipMessage = '[' + fileName + "] {{ $fsLang['uploadWarningExtension'] }}";
                 tips(tipMessage, true);
 
                 return false;
             }
 
             if (fileSize > maxSize * 1024 * 1024) {
-                tipMessage = '[' + fileName + "] {{ $fsCodeMessage['36113'] }}";
+                tipMessage = '[' + fileName + "] {{ $fsLang['uploadWarningMaxSize'] }}";
                 tips(tipMessage, true);
 
                 return false;
             }
 
             if (maxDuration && fileDuration > maxDuration) {
-                tipMessage = '[' + fileName + "] {{ $fsCodeMessage['36114'] }}";
+                tipMessage = '[' + fileName + "] {{ $fsLang['uploadWarningMaxDuration'] }}";
                 tips(tipMessage, true);
 
                 return false;
@@ -150,24 +159,29 @@
             return true;
         }
 
-        // get upload token
-        function getUploadToken(fileData, file) {
+        // make upload token
+        function makeUploadToken(fileData, file) {
             $.ajax({
                 url: "{{ route('s3-storage.api.upload-token') }}",
-                type: "GET",
+                type: 'POST',
                 data: fileData,
                 success: function (res) {
                     if (res.code != 0) {
                         tips(res.message, true);
 
-                        let btn = $('#uploadSubmit').find('button[type="submit"]');
-                        btn.prop('disabled', false);
-                        btn.find('.spinner-border').remove();
+                        $('#uploadSubmit').prop('disabled', false);
+                        $('#uploadSubmit').find('.spinner-border').remove();
 
                         return;
                     }
 
                     uploadFile(res.data, file);
+                },
+                error: function (e) {
+                    tips(e.responseJSON.message, true);
+
+                    $('#uploadSubmit').prop('disabled', false);
+                    $('#uploadSubmit').find('.spinner-border').remove();
                 },
             });
         };
@@ -175,6 +189,7 @@
         // upload file
         function uploadFile(uploadToken, file) {
             let formData = new FormData();
+
             formData.append('file', file);
 
             $.ajax({
@@ -195,11 +210,10 @@
                     updateFileUploaded(uploadToken.fid, windowClose);
                 },
                 error: function (e) {
-                    tips("{{ $fsCodeMessage['32105'] }}", true);
+                    tips(e.responseJSON.message, true);
 
-                    let btn = $('#uploadSubmit').find('button[type="submit"]');
-                    btn.prop('disabled', false);
-                    btn.find('.spinner-border').remove();
+                    $('#uploadSubmit').prop('disabled', false);
+                    $('#uploadSubmit').find('.spinner-border').remove();
                 },
             });
         };
@@ -229,11 +243,13 @@
                     // /static/js/fresns-callback.js
                     FresnsCallback.send(callbackAction, res.data);
                 },
+                error: function (e) {
+                    tips(e.responseJSON.message, true);
+                },
                 complete: function (e) {
                     if (windowClose) {
-                        let btn = $('#uploadSubmit').find('button[type="submit"]');
-                        btn.prop('disabled', false);
-                        btn.find('.spinner-border').remove();
+                        $('#uploadSubmit').prop('disabled', false);
+                        $('#uploadSubmit').find('.spinner-border').remove();
                     }
                 },
             });
