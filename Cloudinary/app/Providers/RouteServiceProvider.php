@@ -13,43 +13,18 @@ use Illuminate\Support\Facades\Route;
 
 class RouteServiceProvider extends ServiceProvider
 {
-    /**
-     * Called before routes are registered.
-     *
-     * Register any model bindings or pattern based filters.
-     */
-    public function boot(): void
+    public function boot()
     {
         parent::boot();
     }
 
-    /**
-     * Define the routes for the application.
-     */
-    public function map(): void
+    public function map()
     {
-        $this->mapApiRoutes();
-
         $this->mapWebRoutes();
     }
 
-    /**
-     * Define the "web" routes for the application.
-     *
-     * These routes all receive session state, CSRF protection, etc.
-     */
-    protected function mapWebRoutes(): void
+    protected function mapWebRoutes()
     {
         Route::middleware('web')->group(dirname(__DIR__, 2).'/routes/web.php');
-    }
-
-    /**
-     * Define the "api" routes for the application.
-     *
-     * These routes are typically stateless.
-     */
-    protected function mapApiRoutes(): void
-    {
-        Route::prefix('api')->middleware('api')->group(dirname(__DIR__, 2).'/routes/api.php');
     }
 }

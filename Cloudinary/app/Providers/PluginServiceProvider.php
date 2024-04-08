@@ -10,14 +10,13 @@ namespace Plugins\Cloudinary\Providers;
 
 use Illuminate\Support\ServiceProvider;
 
-class CloudinaryServiceProvider extends ServiceProvider
+class PluginServiceProvider extends ServiceProvider
 {
     /**
      * Boot the application events.
      */
     public function boot(): void
     {
-        $this->registerTranslations();
         $this->registerViews();
     }
 
@@ -30,26 +29,10 @@ class CloudinaryServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register translations.
-     */
-    public function registerTranslations(): void
-    {
-        $this->loadTranslationsFrom(dirname(__DIR__, 2).'/resources/lang', 'Cloudinary');
-    }
-
-    /**
      * Register views.
      */
     public function registerViews(): void
     {
         $this->loadViewsFrom(dirname(__DIR__, 2).'/resources/views', 'Cloudinary');
-    }
-
-    /**
-     * Get the services provided by the provider.
-     */
-    public function provides(): array
-    {
-        return [];
     }
 }

@@ -8,8 +8,13 @@
 
 namespace Plugins\Cloudinary\Services;
 
+use App\Fresns\Words\File\DTO\GetAntiLinkFileInfoDTO;
+use App\Fresns\Words\File\DTO\GetAntiLinkFileInfoListDTO;
+use App\Fresns\Words\File\DTO\GetAntiLinkFileOriginalUrlDTO;
+use App\Fresns\Words\File\DTO\LogicalDeletionFilesDTO;
+use App\Fresns\Words\File\DTO\PhysicalDeletionFilesDTO;
+use App\Fresns\Words\File\DTO\UploadFileDTO;
 use App\Helpers\CacheHelper;
-use App\Helpers\ConfigHelper;
 use App\Helpers\FileHelper;
 use App\Helpers\PrimaryHelper;
 use App\Helpers\StrHelper;
@@ -20,14 +25,6 @@ use App\Utilities\FileUtility;
 use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Fresns\CmdWordManager\Traits\CmdWordResponseTrait;
 use Plugins\Cloudinary\Helpers\StorageHelper;
-use Plugins\Cloudinary\Services\DTO\GetAntiLinkFileInfoDTO;
-use Plugins\Cloudinary\Services\DTO\GetAntiLinkFileInfoListDTO;
-use Plugins\Cloudinary\Services\DTO\GetAntiLinkFileOriginalUrlDTO;
-use Plugins\Cloudinary\Services\DTO\GetUploadTokenDTO;
-use Plugins\Cloudinary\Services\DTO\LogicalDeletionFilesDTO;
-use Plugins\Cloudinary\Services\DTO\PhysicalDeletionFilesDTO;
-use Plugins\Cloudinary\Services\DTO\UploadFileDTO;
-use Plugins\Cloudinary\Services\DTO\UploadFileInfoDTO;
 
 class CmdWordService
 {
@@ -36,15 +33,10 @@ class CmdWordService
     // getUploadToken
     public function getUploadToken($wordBody)
     {
-        $dtoWordBody = new GetUploadTokenDTO($wordBody);
-
-        $data = [
-            'storageId' => File::STORAGE_CLOUDINARY,
-            'token' => null,
-            'expireTime' => null,
-        ];
-
-        return $this->success($data);
+        /**
+         * S3 upload are not supported by the storage provider.
+         */
+        return $this->failure(32104, ConfigUtility::getCodeMessage(32104));
     }
 
     // uploadFile
@@ -52,151 +44,115 @@ class CmdWordService
     {
         $dtoWordBody = new UploadFileDTO($wordBody);
 
-        // config
-        StorageHelper::config($dtoWordBody->type);
+        StorageHelper::buildDisk($dtoWordBody->type);
+        $storePath = FileHelper::fresnsFileStoragePath($dtoWordBody->type, $dtoWordBody->usageType);
 
-        // upload
-        $folder = FileHelper::fresnsFileStoragePath($dtoWordBody->type, $dtoWordBody->usageType);
-        $usageTag = match ($dtoWordBody->usageType) {
+        $cloudinaryTag = match ($dtoWordBody->usageType) {
             FileUsage::TYPE_OTHER => 'others',
             FileUsage::TYPE_SYSTEM => 'systems',
-            FileUsage::TYPE_OPERATION => 'operations',
             FileUsage::TYPE_STICKER => 'stickers',
             FileUsage::TYPE_USER => 'users',
             FileUsage::TYPE_CONVERSATION => 'conversations',
             FileUsage::TYPE_POST => 'posts',
             FileUsage::TYPE_COMMENT => 'comments',
             FileUsage::TYPE_EXTEND => 'extends',
-            FileUsage::TYPE_PLUGIN => 'plugins',
+            FileUsage::TYPE_App => 'apps',
             default => 'others',
         };
 
-        // https://cloudinary.com/documentation/image_upload_api_reference#upload_optional_parameters
         $config = FileHelper::fresnsFileStorageConfigByType($dtoWordBody->type);
+
+        // https://cloudinary.com/documentation/image_upload_api_reference#upload_optional_parameters
         $options = [
             'type' => $config['bucketRegion'] ?? 'upload', // upload, private and authenticated
-            'folder' => $folder,
-            'tags' => ['fresns', $usageTag],
+            'folder' => $storePath,
+            'tags' => ['fresns', $cloudinaryTag],
         ];
 
         switch ($dtoWordBody->type) {
             case File::TYPE_IMAGE:
-                // image
                 $result = Cloudinary::upload($dtoWordBody->file->getRealPath(), $options);
                 break;
 
             case File::TYPE_VIDEO:
-                // video
                 $result = Cloudinary::uploadVideo($dtoWordBody->file->getRealPath(), $options);
                 break;
 
             case File::TYPE_AUDIO:
-                // audio
                 $result = Cloudinary::uploadVideo($dtoWordBody->file->getRealPath(), $options);
                 break;
 
             default:
-                // file
                 $result = Cloudinary::uploadFile($dtoWordBody->file->getRealPath(), $options);
                 break;
         }
 
         $publicId = $result->getPublicId();
 
-        // save
-        $bodyInfo = [
-            'platformId' => $dtoWordBody->platformId,
-            'usageType' => $dtoWordBody->usageType,
-            'tableName' => $dtoWordBody->tableName,
-            'tableColumn' => $dtoWordBody->tableColumn,
-            'tableId' => $dtoWordBody->tableId,
-            'tableKey' => $dtoWordBody->tableKey,
-            'aid' => $dtoWordBody->aid,
-            'uid' => $dtoWordBody->uid,
-            'type' => $dtoWordBody->type,
-            'disk' => 'remote',
-            'imageHandlePosition' => null,
-            'videoTime' => null,
-            'videoPosterPath' => null,
-            'audioTime' => null,
-            'transcodingState' => 1,
-            'moreJson' => $dtoWordBody->moreJson,
-        ];
-
-        $langTag = \request()->header('X-Fresns-Client-Lang-Tag', ConfigHelper::fresnsConfigDefaultLangTag());
-
-        if ($dtoWordBody->type == File::TYPE_VIDEO) {
-            $videoTime = $result->getResponse()['duration'];
-            $videoMaxTime = ConfigHelper::fresnsConfigByItemKey('video_max_time');
-
-            // check file time
-            if ($videoTime > $videoMaxTime) {
-                // delete file
-                Cloudinary::destroy($publicId, [
-                    'resource_type' => 'video',
-                ]);
-
-                return $this->failure(
-                    36114,
-                    ConfigUtility::getCodeMessage(36114, 'Fresns', $langTag),
-                );
-            }
-
-            $bodyInfo['videoTime'] = $videoTime;
-            $bodyInfo['videoPosterPath'] = $publicId.'.jpg';
-            $bodyInfo['transcodingState'] = File::TRANSCODING_STATE_DONE;
-        }
-
-        if ($dtoWordBody->type == File::TYPE_AUDIO) {
-            $audioTime = $result->getResponse()['duration'];
-            $audioMaxTime = ConfigHelper::fresnsConfigByItemKey('audio_max_time');
-
-            // check file time
-            if ($audioTime > $audioMaxTime) {
-                // delete file
-                Cloudinary::destroy($publicId, [
-                    'resource_type' => 'video',
-                ]);
-
-                return $this->failure(
-                    36114,
-                    ConfigUtility::getCodeMessage(36114, 'Fresns', $langTag),
-                );
-            }
-
-            $bodyInfo['audioTime'] = $audioTime;
-            $bodyInfo['transcodingState'] = File::TRANSCODING_STATE_DONE;
-        }
-
         $extension = $dtoWordBody->file->extension();
         $path = $publicId.'.'.$extension;
 
-        $fileInfo = FileUtility::saveFileInfoToDatabase($bodyInfo, $path, $dtoWordBody->file);
+        $width = null;
+        $height = null;
+        $duration = null;
+        $videoPosterPath = null;
+        $transcodingState = File::TRANSCODING_STATE_WAIT;
 
-        return $this->success($fileInfo);
-    }
+        if ($dtoWordBody->type == File::TYPE_IMAGE || $dtoWordBody->type == File::TYPE_VIDEO) {
+            $width = $result->getResponse()['width'];
+            $height = $result->getResponse()['height'];
+        }
 
-    // uploadFileInfo
-    public function uploadFileInfo($wordBody)
-    {
-        $dtoWordBody = new UploadFileInfoDTO($wordBody);
+        if ($dtoWordBody->type == File::TYPE_VIDEO) {
+            $duration = $result->getResponse()['duration'];
+            $videoPosterPath = $publicId.'.jpg';
+            $transcodingState = File::TRANSCODING_STATE_DONE;
+        }
 
-        $bodyInfo = [
-            'platformId' => $dtoWordBody->platformId,
+        if ($dtoWordBody->type == File::TYPE_AUDIO) {
+            $duration = $result->getResponse()['duration'];
+            $transcodingState = File::TRANSCODING_STATE_DONE;
+        }
+
+        $sha256Hash = hash_file('sha256', $dtoWordBody->file->path());
+
+        $fileInfo = [
+            'type' => $dtoWordBody->type,
+            'width' => $width,
+            'height' => $height,
+            'duration' => $duration,
+            'sha' => $sha256Hash,
+            'shaType' => 'sha256',
+            'warningType' => $dtoWordBody->warningType,
+            'path' => $path,
+            'transcodingState' => $transcodingState,
+            'videoPosterPath' => $videoPosterPath,
+            'originalPath' => null,
+            'uploaded' => true,
+        ];
+
+        $usageInfo = [
             'usageType' => $dtoWordBody->usageType,
+            'platformId' => $dtoWordBody->platformId,
             'tableName' => $dtoWordBody->tableName,
             'tableColumn' => $dtoWordBody->tableColumn,
             'tableId' => $dtoWordBody->tableId,
             'tableKey' => $dtoWordBody->tableKey,
+            'moreInfo' => $dtoWordBody->moreInfo,
             'aid' => $dtoWordBody->aid,
             'uid' => $dtoWordBody->uid,
-            'type' => $dtoWordBody->type,
-            'fileInfo' => $dtoWordBody->fileInfo,
+            'remark' => null,
         ];
 
-        $fileInfo = FileUtility::uploadFileInfo($bodyInfo);
+        $fileModel = FileUtility::uploadFileInfo($dtoWordBody->file, $fileInfo, $usageInfo);
 
-        return $this->success($fileInfo);
+        $apiFileInfo = FileHelper::fresnsFileInfoById($fileModel->fid, $usageInfo);
+
+        if (empty($apiFileInfo)) {
+            return $this->failure(32104, ConfigUtility::getCodeMessage(32104));
+        }
+
+        return $this->success($apiFileInfo);
     }
 
     // getAntiLinkFileInfo
@@ -204,7 +160,7 @@ class CmdWordService
     {
         $dtoWordBody = new GetAntiLinkFileInfoDTO($wordBody);
 
-        $fileInfo = StorageHelper::info($dtoWordBody->fileIdOrFid);
+        $fileInfo = StorageHelper::fileInfo($dtoWordBody->fileIdOrFid);
 
         return $this->success($fileInfo);
     }
@@ -216,7 +172,7 @@ class CmdWordService
 
         $data = [];
         foreach ($dtoWordBody->fileIdsOrFids as $id) {
-            $data[] = StorageHelper::info($id);
+            $data[] = StorageHelper::fileInfo($id);
         }
 
         return $this->success($data);
@@ -233,7 +189,7 @@ class CmdWordService
             $file = PrimaryHelper::fresnsModelByFsid('file', $dtoWordBody->fileIdOrFid);
         }
 
-        $originalUrl = StorageHelper::url($file, 'originalUrl');
+        $originalUrl = StorageHelper::fileUrl($file, 'originalUrl');
 
         return $this->success([
             'originalUrl' => $originalUrl,
@@ -255,9 +211,9 @@ class CmdWordService
     {
         $dtoWordBody = new PhysicalDeletionFilesDTO($wordBody);
 
-        StorageHelper::config($dtoWordBody->type);
+        // Storage disk
+        StorageHelper::buildDisk($dtoWordBody->type);
 
-        // delete
         foreach ($dtoWordBody->fileIdsOrFids as $id) {
             if (StrHelper::isPureInt($id)) {
                 $file = File::where('id', $id)->first();
@@ -279,21 +235,28 @@ class CmdWordService
                 default => 'raw',
             };
 
-            // if ($file->type == File::TYPE_VIDEO && $file->video_poster_path) {
-            //     // code
-            // }
-
-            // if ($file->original_path) {
-            //     // code
-            // }
-
-            // delete file
-            $fileDelete = Cloudinary::destroy($publicId, [
+            $deleteStatus = Cloudinary::destroy($publicId, [
                 'resource_type' => $resourceType,
             ]);
 
-            if (! $fileDelete) {
+            if (! $deleteStatus) {
                 return $this->failure(21006);
+            }
+
+            if ($file->type == File::TYPE_VIDEO && $file->video_poster_path) {
+                $posterPublicId = StorageHelper::getPublicId($file->video_poster_path, 'jpg');
+
+                Cloudinary::destroy($posterPublicId, [
+                    'resource_type' => $resourceType,
+                ]);
+            }
+
+            if ($file->original_path) {
+                $originalPublicId = StorageHelper::getPublicId($file->original_path, $file->extension);
+
+                Cloudinary::destroy($originalPublicId, [
+                    'resource_type' => $resourceType,
+                ]);
             }
 
             $file->update([
@@ -303,14 +266,7 @@ class CmdWordService
             $file->delete();
 
             // forget cache
-            CacheHelper::forgetFresnsFileUsage($file->id);
-            CacheHelper::forgetFresnsKeys([
-                "fresns_cloudinary_antilink_{$file->id}",
-                "fresns_cloudinary_antilink_{$file->fid}",
-            ], [
-                'fresnsPlugins',
-                'pluginCloudinary',
-            ]);
+            CacheHelper::clearDataCache('file', $file->fid);
         }
 
         return $this->success();

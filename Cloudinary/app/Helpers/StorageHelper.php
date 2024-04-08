@@ -18,11 +18,10 @@ use Illuminate\Support\Str;
 
 class StorageHelper
 {
-    // config
-    // https://github.com/cloudinary-devs/cloudinary-laravel/
-    public static function config(int $type): void
+    // build disk
+    public static function buildDisk(int $fileType): void
     {
-        $config = FileHelper::fresnsFileStorageConfigByType($type);
+        $config = FileHelper::fresnsFileStorageConfigByType($fileType);
 
         $cloudUrl = "cloudinary://{$config['secretId']}:{$config['secretKey']}@{$config['bucketName']}";
 
@@ -33,7 +32,7 @@ class StorageHelper
         ]);
     }
 
-    // get public id
+    // get cloudinary public id
     public static function getPublicId(string $path, string $extension): string
     {
         $string = Str::of($path)->rtrim('.'.$extension);
@@ -42,20 +41,19 @@ class StorageHelper
     }
 
     // get anti link url
-    public static function url(File $file, ?string $urlType = null): ?string
+    public static function fileUrl(?File $file, ?string $type = null): ?string
     {
-        StorageHelper::config($file->type);
+        if (empty($file)) {
+            return null;
+        }
+
+        $storageConfig = FileHelper::fresnsFileStorageConfigByType($file->type);
+        $antiLinkKey = $storageConfig['antiLinkKey'];
+        $antiLinkExpire = $storageConfig['antiLinkExpire'] ?? 30;
+
+        StorageHelper::buildDisk($file->type);
 
         $publicId = StorageHelper::getPublicId($file->path, $file->extension);
-
-        $expireMinutes = match ($file->type) {
-            File::TYPE_IMAGE => ConfigHelper::fresnsConfigByItemKey('image_url_expire'),
-            File::TYPE_VIDEO => ConfigHelper::fresnsConfigByItemKey('video_url_expire'),
-            File::TYPE_AUDIO => ConfigHelper::fresnsConfigByItemKey('audio_url_expire'),
-            File::TYPE_DOCUMENT => ConfigHelper::fresnsConfigByItemKey('document_url_expire'),
-            default => ConfigHelper::fresnsConfigByItemKey('image_url_expire'),
-        };
-        $tenMinutesLater = time() + $expireMinutes * 60;
 
         $resourceType = match ($file->type) {
             File::TYPE_IMAGE => 'image',
@@ -64,59 +62,160 @@ class StorageHelper
             default => 'raw',
         };
 
-        $url = Cloudinary::uploadApi()->privateDownloadUrl($publicId, $file->extension, [
-            'resource_type' => $resourceType,
-            'expires_at' => $tenMinutesLater,
-        ]);
+        $tenMinutesLater = time() + $antiLinkExpire * 60;
 
-        return $url;
+        // https://cloudinary.com/documentation/image_upload_api_reference#generate_archive_optional_parameters
+        $fileUrl = null;
+        switch ($type) {
+            case 'imageConfigUrl':
+                $configs = ConfigHelper::fresnsConfigByItemKeys([
+                    'image_handle_position',
+                    'image_thumb_config',
+                ]);
+
+                $fileUrl = Cloudinary::uploadApi()->privateDownloadUrl($publicId, $file->extension, [
+                    'resource_type' => $resourceType,
+                    'transformations' => $configs['image_thumb_config'],
+                    'expires_at' => $tenMinutesLater,
+                ]);
+                break;
+
+            case 'imageRatioUrl':
+                $configs = ConfigHelper::fresnsConfigByItemKeys([
+                    'image_handle_position',
+                    'image_thumb_ratio',
+                ]);
+
+                $fileUrl = Cloudinary::uploadApi()->privateDownloadUrl($publicId, $file->extension, [
+                    'resource_type' => $resourceType,
+                    'transformations' => $configs['image_thumb_ratio'],
+                    'expires_at' => $tenMinutesLater,
+                ]);
+                break;
+
+            case 'imageSquareUrl':
+                $configs = ConfigHelper::fresnsConfigByItemKeys([
+                    'image_handle_position',
+                    'image_thumb_square',
+                ]);
+
+                $fileUrl = Cloudinary::uploadApi()->privateDownloadUrl($publicId, $file->extension, [
+                    'resource_type' => $resourceType,
+                    'transformations' => $configs['image_thumb_square'],
+                    'expires_at' => $tenMinutesLater,
+                ]);
+                break;
+
+            case 'imageBigUrl':
+                $configs = ConfigHelper::fresnsConfigByItemKeys([
+                    'image_handle_position',
+                    'image_thumb_big',
+                ]);
+
+                $fileUrl = Cloudinary::uploadApi()->privateDownloadUrl($publicId, $file->extension, [
+                    'resource_type' => $resourceType,
+                    'transformations' => $configs['image_thumb_big'],
+                    'expires_at' => $tenMinutesLater,
+                ]);
+                break;
+
+            case 'videoUrl':
+                $configs = ConfigHelper::fresnsConfigByItemKeys([
+                    'video_transcode_handle_position',
+                    'video_transcode_parameter',
+                ]);
+
+                $fileUrl = Cloudinary::uploadApi()->privateDownloadUrl($publicId, $file->extension, [
+                    'resource_type' => $resourceType,
+                    'transformations' => $configs['video_transcode_parameter'],
+                    'expires_at' => $tenMinutesLater,
+                ]);
+                break;
+
+            case 'videoPosterUrl':
+                $configs = ConfigHelper::fresnsConfigByItemKeys([
+                    'video_poster_handle_position',
+                    'video_poster_parameter',
+                ]);
+                // $videoPosterPath = $file->video_poster_path ?: $publicId.'.jpg';
+                // $fileUrl = StrHelper::qualifyUrl($videoPosterPath, $storageConfig['bucketDomain']);
+
+                $fileUrl = Cloudinary::uploadApi()->privateDownloadUrl($publicId, 'jpg', [
+                    'resource_type' => 'image',
+                    'transformations' => $configs['video_poster_parameter'],
+                    'expires_at' => $tenMinutesLater,
+                ]);
+                break;
+
+            case 'audioUrl':
+                $configs = ConfigHelper::fresnsConfigByItemKeys([
+                    'audio_transcode_handle_position',
+                    'audio_transcode_parameter',
+                ]);
+
+                $fileUrl = Cloudinary::uploadApi()->privateDownloadUrl($publicId, $file->extension, [
+                    'resource_type' => $resourceType,
+                    'transformations' => $configs['audio_transcode_parameter'],
+                    'expires_at' => $tenMinutesLater,
+                ]);
+                break;
+
+            case 'documentPreviewUrl':
+                $fileUrl = FileHelper::fresnsFileDocumentPreviewUrl($file->extension);
+                break;
+
+            case 'originalUrl':
+                $fileUrl = Cloudinary::uploadApi()->privateDownloadUrl($publicId, $file->extension, [
+                    'resource_type' => $resourceType,
+                    'expires_at' => $tenMinutesLater,
+                ]);
+                break;
+        }
+
+        return $fileUrl;
     }
 
     // get file info
-    public static function info(string $fileIdOrFid): int|array
+    public static function fileInfo(string $fileIdOrFid): int|array
     {
-        $cacheKey = 'fresns_cloudinary_antilink_'.$fileIdOrFid;
-        $cacheTags = ['fresnsPlugins', 'pluginCloudinary'];
+        $cacheKey = 'fresns_file_info_'.$fileIdOrFid;
+        $cacheTag = 'fresnsFiles';
 
-        $fileInfo = CacheHelper::get($cacheKey, $cacheTags);
+        $fileInfo = CacheHelper::get($cacheKey, $cacheTag);
         if (empty($fileInfo)) {
             if (StrHelper::isPureInt($fileIdOrFid)) {
-                $file = File::where('id', $fileIdOrFid)->first();
+                $fileModel = File::where('id', $fileIdOrFid)->first();
             } else {
-                $file = File::where('fid', $fileIdOrFid)->first();
+                $fileModel = File::where('fid', $fileIdOrFid)->first();
             }
 
-            if (empty($file) || ! $file?->is_enabled) {
+            if (! $fileModel || ! $fileModel?->is_enabled) {
                 return null;
             }
 
-            $fileInfo = $file->getFileInfo();
+            $fileInfo = $fileModel->getFileInfo();
 
-            $keys = [
-                'imageConfigUrl', 'imageRatioUrl', 'imageSquareUrl', 'imageBigUrl',
-                'videoPosterUrl', 'videoUrl',
-                'audioUrl',
-                'documentPreviewUrl',
-            ];
+            // anti link
+            $configs = FileHelper::fresnsFileStorageConfigByType($fileModel->type);
+            if ($configs['antiLinkStatus']) {
+                $urlKeys = [
+                    'imageConfigUrl', 'imageRatioUrl', 'imageSquareUrl', 'imageBigUrl',
+                    'videoUrl', 'videoPosterUrl',
+                    'audioUrl',
+                    'documentPreviewUrl',
+                ];
 
-            foreach ($keys as $key) {
-                if ($key == 'documentPreviewUrl') {
-                    $antiLinkUrl = StorageHelper::url($file, $key);
+                foreach ($urlKeys as $key) {
+                    if (! array_key_exists($key, $fileInfo)) {
+                        continue;
+                    }
 
-                    $fileInfo[$key] = FileHelper::fresnsFileDocumentPreviewUrl($antiLinkUrl, $file->fid, $file->extension);
-
-                    continue;
+                    $fileInfo[$key] = StorageHelper::fileUrl($fileModel, $key);
                 }
-
-                if (empty($fileInfo[$key])) {
-                    continue;
-                }
-
-                $fileInfo[$key] = StorageHelper::url($file, $key);
             }
 
-            $cacheTime = CacheHelper::fresnsCacheTimeByFileType($file->type, null, 2);
-            CacheHelper::put($fileInfo, $cacheKey, $cacheTags, null, $cacheTime);
+            $cacheTime = CacheHelper::fresnsCacheTimeByFileType($fileModel->type, null, 2);
+            CacheHelper::put($fileInfo, $cacheKey, $cacheTag, null, $cacheTime);
         }
 
         return $fileInfo;

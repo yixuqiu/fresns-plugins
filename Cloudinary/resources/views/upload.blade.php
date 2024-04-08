@@ -1,303 +1,261 @@
 @extends('Cloudinary::layouts.master')
 
 @section('content')
-    @if ($fileCount >= $uploadConfig['uploadNumber'])
-        <div class="alert alert-danger" role="alert">
-            {{ $fileCountTip }}
-        </div>
-    @else
-        <form class="mt-4 mb-2 mx-2" method="post" action="" enctype="multipart/form-data">
-            <input type="hidden" name="type" value="{{ $fileType }}">
-            <input type="hidden" name="platformId" value="{{ $headers['platformId'] }}">
-            <input type="hidden" name="aid" value="{{ $headers['aid'] }}">
-            <input type="hidden" name="uid" value="{{ $headers['uid'] }}">
-            <input type="hidden" name="usageType" value="{{ $uploadInfo['usageType'] }}">
-            <input type="hidden" name="tableName" value="{{ $uploadInfo['tableName'] }}">
-            <input type="hidden" name="tableColumn" value="{{ $uploadInfo['tableColumn'] ?? 'id' }}">
-            <input type="hidden" name="tableId" value="{{ $uploadInfo['tableId'] ?? null }}">
-            <input type="hidden" name="tableKey" value="{{ $uploadInfo['tableKey'] ?? null }}">
+    <div>
+        <form class="api-request-form" action="#" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="extensions" value="{{ $extensionNames }}">
+            <input type="hidden" name="maxSize" value="{{ $maxSize }}">
+            <input type="hidden" name="maxDuration" value="{{ $maxDuration }}">
 
-            <div class="input-group">
-                <input class="form-control" type="file" id="formFile" @if($uploadConfig['uploadNumber'] > 1) multiple="multiple" max="{{ $fileMax }}" @endif accept="{{ $uploadConfig['inputAccept'] }}" class="cloudinary-fileupload" data-cloudinary-field="image_id" data-form-data="[upload-preset-and-other-upload-options-as-html-escaped-JSON-data]">
-                <button class="btn btn-outline-secondary ajax-progress-submit" type="button">{{ $fsLang['editorUploadButton'] }}</button>
+            <div class="input-group mb-3">
+                <input type="file" class="form-control" name="files" accept="{{ $inputAccept }}" @if($maxUploadNumber > 1) multiple="multiple" max="{{ $maxUploadNumber }}" @endif>
+                <button class="btn btn-outline-secondary" type="submit" id="uploadSubmit">{{ $fsLang['uploadButton'] }}</button>
             </div>
-            <div class="ajax-progress progress mt-2"></div>
-        </form>
-    @endif
 
-    <div class="mx-2 mt-3 text-secondary fs-7" id="extensions" data-value="{{ $uploadConfig['extensions'] }}">{{ $fsLang['editorUploadExtensions'] }}: {{ $uploadConfig['extensions'] }}</div>
-    <div class="mx-2 mt-2 text-secondary fs-7" id="uploadMaxSize" data-value="{{ $uploadConfig['maxSize'] }}">{{ $fsLang['editorUploadMaxSize'] }}: {{ $uploadConfig['maxSize'] }} MB</div>
-    @if ($uploadConfig['maxTime'] > 0)
-        <div class="mx-2 mt-2 text-secondary fs-7" id="uploadMaxTime" data-value="{{ $uploadConfig['maxTime'] }}">{{ $fsLang['editorUploadMaxTime'] }}: {{ $uploadConfig['maxTime'] }} {{ $fsLang['unitSecond'] }}</div>
-    @endif
-    <div class="mx-2 my-2 text-secondary fs-7" id="uploadFileMax" data-value="{{ $fileMax }}">{{ $fsLang['editorUploadNumber'] }}: {{ $fileMax }}</div>
+            <div class="progress d-none" id="progressbar" role="progressbar" aria-label="Animated striped example" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
+            </div>
+        </form>
+
+        <div class="form-text mt-3 text-break">{{ $fsLang['uploadTipExtensions'] }}: {{ $extensionNames }}</div>
+
+        <div class="form-text mt-2">{{ $fsLang['uploadTipMaxSize'] }}: {{ $maxSize }} MB</div>
+
+        @if ($fileType == 'video' || $fileType == 'audio')
+            <div class="form-text mt-2">{{ $fsLang['uploadTipMaxDuration'] }}: {{ $maxDuration }} {{ $fsLang['unitSecond'] }}</div>
+        @endif
+
+        <div class="form-text mt-2">{{ $fsLang['uploadTipMaxNumber'] }}: {{ $maxUploadNumber }}</div>
+    </div>
 @endsection
 
-@push('style')
-    <style>
-        .fs-7 {
-            font-size: 0.9rem;
-        }
-    </style>
-@endpush
-
 @push('script')
-    <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
+    <script>
+        var numberFiles = 0;
+        var numberUploaded = 0;
 
-    <script type="text/javascript">
-        function getFileExtension(filename) {
-            return filename.slice(((filename.lastIndexOf('.') - 1) >>> 0) + 2);
-        }
+        // request
+        $('.api-request-form').submit(function (e) {
+            e.preventDefault();
+            let form = $(this),
+                files = form.find('input[name=files]')[0].files;
 
-        function getSignData() {
-            var fileType = $('[name="type"]').val();
-            var usageType = $('[name="usageType"]').val();
+            numberFiles = files.length;
 
-            return new Promise((resolve, reject) => {
-                $.ajax({
-                    method: 'get',
-                    url: `{{ route('cloudinary.signdata') }}?type=${fileType}&usageType=${usageType}`,
-                    contentType: false,
-                    processData: false,
-                    success: function(response) {
-                        console.log(response);
-                        if (response.code != 0) {
-                            window.tips(response.err_msg)
-                        } else {
-                            resolve(response.data)
-                        }
-                    },
-                    error: function(error) {
-                        console.error(error);
-                        window.tips(error.responseJSON.message || error.responseJSON.err_msg || '{{ $fsLang['errorUnknown'] }}')
-                        reject(error)
-                    },
-                });
+            Array.from(files).forEach(file => {
+                getFileData(file);
             });
-        }
-
-        async function uploadFiles(event) {
-            event.preventDefault();
-            const signData = await getSignData();
-
-            var files = $('#formFile')[0].files;
-            var file;
-
-            if (files.length) {
-                $('.ajax-progress-submit').prop('disabled', true);
-                $('.ajax-progress-submit').text('{{ $fsLang['editorUpload'] }}...');
-                $('.ajax-progress-submit').prepend('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ');
-            }
-
-            for (let index = 0; index < files.length; index++) {
-                file = files[index];
-
-                uploadFile(file, signData);
-            }
-        }
-
-        const fileInput = document.querySelector("input[type=file]");
-        fileInput.addEventListener("change", function() {
-            if (this.files.length > "{{ $fileMax }}") {
-                alert("{{ $fsLang['editorUploadNumber'] }}: {{ $fileMax }}");
-                this.value = "";
-            }
         });
 
-        // upload file to cloudinary
-        function uploadFile(file, signData) {
-            const url = "https://api.cloudinary.com/v1_1/" + signData.cloudname + "/auto/upload";
+        // get file data
+        function getFileData(file) {
+            let fileType = "{{ $fileType }}";
 
-            const formData = new FormData();
-            formData.append("file", file);
-            formData.append("api_key", signData.apikey);
-            formData.append("timestamp", signData.timestamp);
-            formData.append("signature", signData.signature);
-            formData.append("eager", signData.eager);
-            formData.append("folder", signData.folder);
+            function proceedWithUpload(fileType, fileData) {
+                console.log('fileData', fileType, fileData);
 
-            $.ajax({
-                method: 'post',
-                url: url,
-                data: formData,
-                contentType: false,
-                processData: false,
-                success: function(response) {
-                    console.log(response);
+                if (!validateFile(fileData)) {
+                    $('#uploadSubmit').prop('disabled', false);
+                    $('#uploadSubmit').find('.spinner-border').remove();
 
-                    if (response.error) {
-                        alert(response.error.message)
-                    }
+                    return;
+                }
 
-                    saveFileinfo(response, file)
-                },
-                error: function(error) {
-                    console.error(error);
-
-                    if (error.responseJSON.error) {
-                        alert(error.responseJSON.error.message)
-                    }
-                },
-            });
-
-        }
-
-        // save file info to fresns
-        function saveFileinfo(response, file) {
-            var fileType = $('[name="type"]').val();
-            var platformId = $('[name="platformId"]').val();
-            var aid = $('[name="aid"]').val();
-            var uid = $('[name="uid"]').val();
-            var usageType = $('[name="usageType"]').val();
-            var tableName = $('[name="tableName"]').val();
-            var tableColumn = $('[name="tableColumn"]').val();
-            var tableId = $('[name="tableId"]').val();
-            var tableKey = $('[name="tableKey"]').val();
-            var dir = response.folder;
-            var uploadType = '';
-            var extension = getFileExtension(file.name);
-            var videoDuration = response.duration;
-            var audioDuration = response.duration;
-            var imageWidth = null;
-            var imageHeight = null;
-            var key = response.public_id + '.' + extension;
-            switch (Number(usageType)) {
-                case 1:
-                    uploadType = 'image';
-                    imageWidth = response.width;
-                    imageHeight = response.height;
-                    break
-                case 2:
-                    uploadType = 'video';
-                case 3:
-                    uploadType = 'audio';
-                    break
-                case 4:
-                    uploadType = 'document';
-                    break
+                makeUploadToken(fileData, file);
             }
 
-            var setting_extensions = $('#extensions').data('value');
-            var setting_uploadMaxSize = $('#uploadMaxSize').data('value');
-            var setting_uploadMaxTime = $('#uploadMaxTime').data('value');
-            var setting_uploadFileMax = $('#uploadFileMax').data('value');
-            if (setting_uploadMaxSize) {
-                setting_uploadMaxSize = setting_uploadMaxSize + 1
-            }
-            if (setting_uploadMaxTime) {
-                setting_uploadMaxTime = setting_uploadMaxTime + 1
-            }
-
-            // error file extension
-            if (setting_extensions && setting_extensions.includes(extension) === false) {
-                alert('{{ $fsError['fileType'] }}');
-                return;
-            }
-
-            // error file size
-            if (setting_uploadMaxSize && file.size > setting_uploadMaxSize * 1024 * 1024) {
-                alert('{{ $fsError['fileSize'] }}');
-                return;
-            }
-
-            var fileInfoItem = {
+            let fileData = {
                 name: file.name,
                 mime: file.type,
-                extension: extension,
-                size: file.size, // Byte
-                md5: null,
-                sha: null,
-                shaType: null,
-                path: key,
-                imageWidth: imageWidth,
-                imageHeight: imageHeight,
-                videoTime: videoDuration,
-                videoCoverPath: null,
-                videoGifPath: null,
-                audioTime: audioDuration,
-                transcodingState: 1,
-                moreJson: null,
-                originalPath: null,
-                rating: null,
-                remark: null,
+                extension: file.name.split('.').pop(),
+                size: file.size,
+                width: null,
+                height: null,
+                duration: null,
+                warning: null,
+                sortOrder: null,
+                moreInfo: null,
             };
 
-            console.log('fileInfoItem', fileInfoItem);
+            if (fileType == 'image') {
+                const image = new Image();
+                image.onload = function() {
+                    fileData.width = this.naturalWidth;
+                    fileData.height = this.naturalHeight;
 
-            // save file info
+                    // clean up memory
+                    URL.revokeObjectURL(this.src);
+
+                    // upload file
+                    proceedWithUpload(fileType, fileData);
+                };
+                image.onerror = function() {
+                    console.error("Error loading image");
+                };
+                image.src = URL.createObjectURL(file);
+
+                return;
+            }
+
+            if (fileType == 'video' || fileType == 'audio') {
+                const media = document.createElement(fileType);
+                media.preload = 'metadata';
+                media.onloadedmetadata = function() {
+                    fileData.width = fileType == 'video' ? media.videoWidth : null;
+                    fileData.height = fileType == 'video' ? media.videoHeight : null;
+                    fileData.duration = Math.round(media.duration);
+
+                    // clean up memory
+                    URL.revokeObjectURL(this.src);
+
+                    // upload file
+                    proceedWithUpload(fileType, fileData);
+                };
+                media.onerror = function() {
+                    console.error(`Error loading ${fileType}`);
+                };
+                media.src = URL.createObjectURL(file);
+
+                return;
+            }
+
+            // upload file
+            proceedWithUpload(fileType, fileData);
+        };
+
+        // validate file data
+        function validateFile(fileData) {
+            let extensions = $('input[name="extensions"]').val().split(','),
+                maxSize = parseInt($('input[name="maxSize"]').val()),
+                maxDuration = parseInt($('input[name="maxDuration"]').val());
+
+            let fileName = fileData.name;
+            let fileExtension = fileData.extension;
+            let fileSize = fileData.size;
+            let fileDuration = fileData.duration;
+            let tipMessage;
+
+            if (!extensions.includes(fileExtension)) {
+                tipMessage = '[' + fileName + "] {{ $fsLang['uploadWarningExtension'] }}";
+                tips(tipMessage, true);
+
+                return false;
+            }
+
+            if (fileSize > maxSize * 1024 * 1024) {
+                tipMessage = '[' + fileName + "] {{ $fsLang['uploadWarningMaxSize'] }}";
+                tips(tipMessage, true);
+
+                return false;
+            }
+
+            if (maxDuration && fileDuration > maxDuration) {
+                tipMessage = '[' + fileName + "] {{ $fsLang['uploadWarningMaxDuration'] }}";
+                tips(tipMessage, true);
+
+                return false;
+            }
+
+            return true;
+        }
+
+        // make upload token
+        function makeUploadToken(fileData, file) {
             $.ajax({
-                url: '/api/cloudinary/upload-fileinfo',
-                method: 'post',
-                data: {
-                    aid: aid,
-                    uid: uid,
-                    platformId: platformId,
-                    usageType: usageType,
-                    tableName: tableName,
-                    tableColumn: tableColumn,
-                    tableId: tableId,
-                    tableKey: tableKey,
-                    type: fileType,
-                    fileInfo: [fileInfoItem],
-                },
-                success(res) {
+                url: "{{ route('cloudinary.api.upload-token') }}",
+                type: 'POST',
+                data: fileData,
+                success: function (res) {
                     if (res.code != 0) {
-                        alert(res.message);
+                        tips(res.message, true);
+
+                        $('#uploadSubmit').prop('disabled', false);
+                        $('#uploadSubmit').find('.spinner-border').remove();
+
                         return;
                     }
 
-                    const fresnsCallbackMessage = {
-                        code: 0,
-                        message: 'ok',
-                        action: {
-                            postMessageKey: '{{ $postMessageKey }}',
-                            windowClose: true,
-                            redirectUrl: '',
-                            dataHandler: 'add'
-                        },
-                        data: res.data,
+                    uploadFile(res.data, file);
+                },
+                error: function (e) {
+                    tips(e.responseJSON.message, true);
+
+                    $('#uploadSubmit').prop('disabled', false);
+                    $('#uploadSubmit').find('.spinner-border').remove();
+                },
+            });
+        };
+
+        // upload file
+        function uploadFile(uploadToken, file) {
+            let formData = new FormData();
+
+            formData.append('file', file);
+            formData.append("api_key", uploadToken.apiKey);
+            formData.append("folder", uploadToken.folder);
+            formData.append("public_id", uploadToken.publicId);
+            formData.append("timestamp", uploadToken.timestamp);
+            formData.append("signature", uploadToken.signature);
+
+            $.ajax({
+                url: uploadToken.url,
+                type: uploadToken.method,
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (res) {
+                    numberUploaded++;
+
+                    let windowClose = numberFiles == numberUploaded;
+
+                    console.log('updateFileUploaded', uploadToken.fid, windowClose, numberFiles, numberUploaded);
+
+                    updateFileUploaded(uploadToken.fid, windowClose);
+                },
+                error: function (e) {
+                    tips(e.responseJSON.message, true);
+
+                    $('#uploadSubmit').prop('disabled', false);
+                    $('#uploadSubmit').find('.spinner-border').remove();
+                },
+            });
+        };
+
+        // update file uploaded
+        function updateFileUploaded(fid, windowClose = false) {
+            $.ajax({
+                url: "{{ route('cloudinary.api.uploaded') }}",
+                type: 'patch',
+                data: {
+                    fid: fid,
+                },
+                success: function (res) {
+                    if (res.code != 0) {
+                        tips(res.message, true);
+                        return;
                     }
 
-                    const messageString = JSON.stringify(fresnsCallbackMessage);
-                    const userAgent = navigator.userAgent.toLowerCase();
+                    // postMessage
+                    let callbackAction = {
+                        postMessageKey: '{{ $postMessageKey }}',
+                        windowClose: windowClose,
+                        redirectUrl: '',
+                        dataHandler: 'add',
+                    };
 
-                    switch (true) {
-                        case (window.Android !== undefined):
-                            // Android (addJavascriptInterface)
-                            window.Android.receiveMessage(messageString);
-                            break;
-
-                        case (window.webkit && window.webkit.messageHandlers.iOSHandler !== undefined):
-                            // iOS (WKScriptMessageHandler)
-                            window.webkit.messageHandlers.iOSHandler.postMessage(messageString);
-                            break;
-
-                        case (window.FresnsJavascriptChannel !== undefined):
-                            // Flutter
-                            window.FresnsJavascriptChannel.postMessage(messageString);
-                            break;
-
-                        case (window.ReactNativeWebView !== undefined):
-                            // React Native WebView
-                            window.ReactNativeWebView.postMessage(messageString);
-                            break;
-
-                        case (userAgent.indexOf('miniprogram') > -1):
-                            // WeChat Mini Program
-                            wx.miniProgram.postMessage({ data: messageString });
-                            wx.miniProgram.navigateBack();
-                            break;
-
-                        // Web
-                        default:
-                            parent.postMessage(messageString, '*');
+                    // /static/js/fresns-callback.js
+                    FresnsCallback.send(callbackAction, res.data);
+                },
+                error: function (e) {
+                    tips(e.responseJSON.message, true);
+                },
+                complete: function (e) {
+                    if (windowClose) {
+                        $('#uploadSubmit').prop('disabled', false);
+                        $('#uploadSubmit').find('.spinner-border').remove();
                     }
                 },
             });
-        }
-
-        $(document).ready(function () {
-            $('.ajax-progress-submit').click(_.debounce(uploadFiles, 1500));
-        });
+        };
     </script>
 @endpush

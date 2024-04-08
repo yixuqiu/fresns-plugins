@@ -25,7 +25,6 @@ class CmdWordServiceProvider extends ServiceProvider implements CmdWordProviderC
     protected $cmdWordsMap = [
         ['word' => 'getUploadToken', 'provider' => [CmdWordService::class, 'getUploadToken']],
         ['word' => 'uploadFile', 'provider' => [CmdWordService::class, 'uploadFile']],
-        ['word' => 'uploadFileInfo', 'provider' => [CmdWordService::class, 'uploadFileInfo']],
         ['word' => 'getAntiLinkFileInfo', 'provider' => [CmdWordService::class, 'getAntiLinkFileInfo']],
         ['word' => 'getAntiLinkFileInfoList', 'provider' => [CmdWordService::class, 'getAntiLinkFileInfoList']],
         ['word' => 'getAntiLinkFileOriginalUrl', 'provider' => [CmdWordService::class, 'getAntiLinkFileOriginalUrl']],
