@@ -45,6 +45,11 @@
             let form = $(this),
                 files = form.find('input[name=files]')[0].files;
 
+            if (!files.length) {
+                alert("{{ $fsLang['uploadTip'] }}");
+                return;
+            }
+
             numberFiles = files.length;
             numberUploaded = 0;
 
@@ -188,7 +193,7 @@
             }
 
             return true;
-        }
+        };
 
         // make upload token
         function makeUploadToken(fileData, file) {

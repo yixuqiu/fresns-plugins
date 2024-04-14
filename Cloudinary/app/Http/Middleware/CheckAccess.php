@@ -51,11 +51,17 @@ class CheckAccess
             return response()->view('Cloudinary::error', compact('code', 'message'), 403);
         }
 
-        // usageType,usageFsid,type
-        $uploadInfoArr = explode(',', $uploadInfo);
+        // usageType,usageFsid,fileType,archiveCode
+        $uploadInfoExplode = explode(',', $uploadInfo);
+        $uploadInfoArr = [
+            'usageType' => $uploadInfoExplode[0] ?? null,
+            'usageFsid' => $uploadInfoExplode[1] ?? null,
+            'fileType' => $uploadInfoExplode[2] ?? null,
+            'archiveCode' => $uploadInfoExplode[3] ?? null,
+        ];
 
         // check upload perm
-        $type = match ($uploadInfoArr[2] ?? null) {
+        $type = match ($uploadInfoArr['fileType']) {
             'image' => File::TYPE_IMAGE,
             'video' => File::TYPE_VIDEO,
             'audio' => File::TYPE_AUDIO,
@@ -64,8 +70,9 @@ class CheckAccess
         };
         $wordBody = [
             'uid' => $fresnsResp->getData('uid'),
-            'usageType' => $uploadInfoArr[0] ?? null,
-            'usageFsid' => $uploadInfoArr[1] ?? null,
+            'usageType' => $uploadInfoArr['usageType'],
+            'usageFsid' => $uploadInfoArr['usageFsid'],
+            'archiveCode' => $uploadInfoArr['archiveCode'],
             'type' => $type,
             'extension' => null,
             'size' => null,
@@ -85,9 +92,9 @@ class CheckAccess
             'langTag' => $langTag,
             'timezone' => $fresnsResp->getData('timezone'),
             'authUid' => $fresnsResp->getData('uid'),
-            'usageType' => $uploadInfoArr[0],
-            'usageFsid' => $uploadInfoArr[1],
-            'fileType' => $uploadInfoArr[2],
+            'usageType' => $uploadInfoArr['usageType'],
+            'usageFsid' => $uploadInfoArr['usageFsid'],
+            'fileType' => $uploadInfoArr['fileType'],
             'maxUploadNumber' => $permResp->getData('maxUploadNumber'),
         ]);
 
