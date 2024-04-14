@@ -36,7 +36,7 @@
         var numberUploaded = 0;
 
         var progressInterval;
-        var maxProgress = 90;
+        var maxProgress = 50;
 
         // request
         $('.api-request-form').submit(function (e) {
@@ -53,26 +53,33 @@
             numberFiles = files.length;
             numberUploaded = 0;
 
-            // progress bar
-            $('#progressbar').removeClass('d-none').attr('aria-valuenow', 0)
+            // progress bar initialization
+            $('#progressbar').removeClass('d-none').attr('aria-valuenow', 0);
             $('#progressbar').find('.progress-bar').css('width', '0%').text('0%');
             clearInterval(progressInterval);
 
-            progressInterval = setInterval(function() {
+            // Adjusting progress bar increment dynamically
+            progressInterval = setInterval(function () {
                 var currentProgress = parseInt($('#progressbar').attr('aria-valuenow'));
-                var increment = maxProgress - currentProgress > 10 ? 10 : 1; // Slow down the rate of progress when approaching maximum progress
-                var newProgress = currentProgress + increment > maxProgress ? maxProgress : currentProgress + increment;
+                var increment = 0;
 
-                if(newProgress >= maxProgress || numberUploaded === numberFiles) {
-                    clearInterval(progressInterval);
-                    if(numberUploaded === numberFiles) {
-                        // Set the progress bar directly to 100% when all file uploads are complete
-                        newProgress = 100;
-                    }
+                if (currentProgress < maxProgress) {
+                    // Faster increment rate before reaching maxProgress
+                    increment = maxProgress - currentProgress > 10 ? 10 : maxProgress - currentProgress;
+                } else if (currentProgress >= maxProgress && currentProgress < 100) {
+                    // Slower increment rate after reaching maxProgress
+                    increment = currentProgress < 98 ? 1 : 0.5; // even slower when approaching 100%
                 }
 
-                $('#progressbar').attr('aria-valuenow', newProgress)
+                var newProgress = currentProgress + increment;
+                newProgress = newProgress > 100 ? 100 : newProgress;
+
+                $('#progressbar').attr('aria-valuenow', newProgress);
                 $('#progressbar').find('.progress-bar').css('width', newProgress + '%').text(newProgress + '%');
+
+                if (newProgress >= 100 || numberUploaded === numberFiles) {
+                    clearInterval(progressInterval);
+                }
             }, 500);
 
             // upload
@@ -93,7 +100,6 @@
                     $('#uploadSubmit').find('.spinner-border').remove();
 
                     $('#progressbar').addClass('d-none');
-
                     return;
                 }
 
@@ -108,14 +114,14 @@
                 width: null,
                 height: null,
                 duration: null,
-                warning: null,
+                warning: 'none',
                 sortOrder: null,
                 moreInfo: null,
             };
 
             if (fileType == 'image') {
                 const image = new Image();
-                image.onload = function() {
+                image.onload = function () {
                     fileData.width = this.naturalWidth;
                     fileData.height = this.naturalHeight;
 
@@ -125,8 +131,8 @@
                     // upload file
                     proceedWithUpload(fileType, fileData);
                 };
-                image.onerror = function() {
-                    console.error("Error loading image");
+                image.onerror = function () {
+                    console.error('Error loading image');
                 };
                 image.src = URL.createObjectURL(file);
 
@@ -136,7 +142,7 @@
             if (fileType == 'video' || fileType == 'audio') {
                 const media = document.createElement(fileType);
                 media.preload = 'metadata';
-                media.onloadedmetadata = function() {
+                media.onloadedmetadata = function () {
                     fileData.width = fileType == 'video' ? media.videoWidth : null;
                     fileData.height = fileType == 'video' ? media.videoHeight : null;
                     fileData.duration = Math.round(media.duration);
@@ -147,7 +153,7 @@
                     // upload file
                     proceedWithUpload(fileType, fileData);
                 };
-                media.onerror = function() {
+                media.onerror = function () {
                     console.error(`Error loading ${fileType}`);
                 };
                 media.src = URL.createObjectURL(file);
@@ -209,7 +215,6 @@
                         $('#uploadSubmit').find('.spinner-border').remove();
 
                         $('#progressbar').addClass('d-none');
-
                         return;
                     }
 
@@ -290,6 +295,7 @@
                 },
                 complete: function (e) {
                     if (lastUploaded) {
+                        $('#uploadSubmit').prop('disabled', false);
                         $('#uploadSubmit').find('.spinner-border').remove();
 
                         $('#progressbar').attr('aria-valuenow', 100);

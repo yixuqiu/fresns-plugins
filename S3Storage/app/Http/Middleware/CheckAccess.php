@@ -107,9 +107,9 @@ class CheckAccess
         Cookie::queue('fresns_plugin_s3_storage_lang_tag', $langTag);
         Cookie::queue('fresns_plugin_s3_storage_auth_ulid', $authUlid);
         Cookie::queue('fresns_plugin_s3_storage_auth_uid', $fresnsResp->getData('uid'));
-        Cookie::queue('fresns_plugin_s3_storage_file_usage_type', $uploadInfoArr[0]);
-        Cookie::queue('fresns_plugin_s3_storage_file_usage_fsid', $uploadInfoArr[1]);
-        Cookie::queue('fresns_plugin_s3_storage_file_type', $uploadInfoArr[2]);
+        Cookie::queue('fresns_plugin_s3_storage_file_usage_type', $uploadInfoArr['usageType']);
+        Cookie::queue('fresns_plugin_s3_storage_file_usage_fsid', $uploadInfoArr['usageFsid']);
+        Cookie::queue('fresns_plugin_s3_storage_file_type', $uploadInfoArr['fileType']);
 
         return $next($request);
     }
