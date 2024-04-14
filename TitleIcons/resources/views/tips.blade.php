@@ -16,7 +16,6 @@
 @endsection
 
 @push('script')
-    <script src="//res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
     <script src="/static/js/fresns-callback.js"></script>
     <script>
         const code = {{ $code }};
@@ -31,7 +30,7 @@
             let apiData = @json($data['detail'] ?? []);
 
             // /static/js/fresns-callback.js
-            FresnsCallback.send(callbackAction, apiData);
+            FresnsCallback.send(callbackAction, apiData, 0, 'ok', 2000);
         }
     </script>
 @endpush

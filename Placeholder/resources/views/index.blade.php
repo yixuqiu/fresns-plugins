@@ -68,7 +68,6 @@
         </tbody>
     </table>
 
-    <script src="//res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
     <script src="/static/js/fresns-callback.js"></script>
     <script>
         let callbackAction = {

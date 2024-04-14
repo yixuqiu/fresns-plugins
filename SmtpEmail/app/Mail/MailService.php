@@ -10,7 +10,7 @@ namespace Plugins\SmtpEmail\Mail;
 
 use App\Helpers\ConfigHelper;
 use App\Helpers\StrHelper;
-use App\Models\VerifyCode;
+use App\Models\TempVerifyCode;
 
 class MailService
 {
@@ -20,14 +20,14 @@ class MailService
             $code = StrHelper::generateDigital();
 
             $data = [
-                'type' => VerifyCode::TYPE_EMAIL,
+                'type' => TempVerifyCode::TYPE_EMAIL,
                 'account' => $account,
                 'template_id' => $templateId,
                 'code' => $code,
                 'expired_at' => now()->addMinutes(15),
             ];
 
-            $verifyCode = VerifyCode::create($data);
+            $verifyCode = TempVerifyCode::create($data);
 
             if ($verifyCode) {
                 return [

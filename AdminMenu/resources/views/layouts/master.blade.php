@@ -28,7 +28,6 @@
 
         <script src="/static/js/bootstrap.bundle.min.js"></script>
         <script src="/static/js/jquery.min.js"></script>
-        <script src="//res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
         <script src="/static/js/fresns-callback.js"></script>
         <script>
             $.ajaxSetup({
@@ -127,7 +126,7 @@
                 };
 
                 // /static/js/fresns-callback.js
-                FresnsCallback.send(callbackAction, detail);
+                FresnsCallback.send(callbackAction, detail, 0, 'ok', 2000);
             }
         </script>
         @stack('script')
