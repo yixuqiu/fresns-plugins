@@ -4,7 +4,7 @@
     "description": "Fresns official development of the SMTP sending method of mail plugin.",
     "author": "Fresns",
     "authorLink": "https://fresns.org",
-    "version": "2.3.1",
+    "version": "2.3.2",
     "panelUsages": [
         "sendEmail"
     ],

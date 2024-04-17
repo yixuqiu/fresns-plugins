@@ -8,6 +8,7 @@
 
 namespace Plugins\SmtpEmail\Mail;
 
+use App\Helpers\AppHelper;
 use App\Helpers\ConfigHelper;
 use App\Helpers\DateHelper;
 use Illuminate\Support\Facades\Mail;
@@ -17,6 +18,8 @@ class MailCmdService
 {
     public function sendCode($wordBody)
     {
+        $langTag = $wordBody['langTag'] ?? AppHelper::getLangTag();
+
         try {
             $codeRes = MailService::makeMailCode($wordBody['account'], $wordBody['templateId']);
             if ($codeRes['code'] != 0) {
@@ -27,7 +30,7 @@ class MailCmdService
                 ];
             }
 
-            $template = MailService::getTemplateValue($wordBody['templateId'], $wordBody['langTag']);
+            $template = MailService::getTemplateValue($wordBody['templateId'], $langTag);
 
             if (empty($template) || empty($template['title']) || empty($template['content'])) {
                 return [
@@ -39,9 +42,9 @@ class MailCmdService
 
             $siteLogo = ConfigHelper::fresnsConfigFileUrlByItemKey('site_logo');
             $siteIcon = ConfigHelper::fresnsConfigFileUrlByItemKey('site_icon');
-            $siteName = ConfigHelper::fresnsConfigByItemKey('site_name', $wordBody['langTag']);
+            $siteName = ConfigHelper::fresnsConfigByItemKey('site_name', $langTag);
             $code = $codeRes['data']['emailCode'];
-            $time = DateHelper::fresnsFormatConversion(now(), $wordBody['langTag']);
+            $time = DateHelper::fresnsFormatConversion(now(), $langTag);
 
             $title = Str::replace('{name}', $siteName, $template['title']);
             $title = Str::replace('{code}', $code, $title);
@@ -73,11 +76,13 @@ class MailCmdService
 
     public function sendEmail($wordBody)
     {
+        $langTag = $wordBody['langTag'] ?? AppHelper::getLangTag();
+
         try {
             $siteLogo = ConfigHelper::fresnsConfigFileUrlByItemKey('site_logo');
             $siteIcon = ConfigHelper::fresnsConfigFileUrlByItemKey('site_icon');
-            $siteName = ConfigHelper::fresnsConfigByItemKey('site_name', $wordBody['langTag']);
-            $time = DateHelper::fresnsFormatConversion(now(), $wordBody['langTag']);
+            $siteName = ConfigHelper::fresnsConfigByItemKey('site_name', $langTag);
+            $time = DateHelper::fresnsFormatConversion(now(), $langTag);
 
             $title = Str::replace('{name}', $siteName, $wordBody['title']);
             $title = Str::replace('{time}', $time, $title);
