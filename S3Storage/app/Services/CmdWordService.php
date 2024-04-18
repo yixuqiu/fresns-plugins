@@ -48,6 +48,7 @@ class CmdWordService
         $presignedUrl = Storage::temporaryUploadUrl($dtoWordBody->path, $expiration);
 
         $data = [
+            'type' => 'presignedUrl',
             'method' => 'PUT',
             'url' => $presignedUrl['url'],
             'headers' => $presignedUrl['headers'],
