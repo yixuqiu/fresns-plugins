@@ -101,7 +101,7 @@ class CheckAccess
         // plugin auth info
         $authUlid = (string) Str::ulid();
 
-        CacheHelper::put('Cloudinary', $authUlid, 'fresnsPluginAuth', null, now()->addMinutes(15));
+        CacheHelper::put('Cloudinary', $authUlid, 'fresnsPluginAuth', 15);
 
         Cookie::queue('fresns_plugin_cloudinary_platform_id', $fresnsResp->getData('platformId'));
         Cookie::queue('fresns_plugin_cloudinary_lang_tag', $langTag);

@@ -89,7 +89,7 @@ class WebController extends Controller
         $authUlid = (string) Str::ulid();
         $cacheTags = ['fresnsPlugins', 'pluginTitleIcons', 'fresnsPluginAuth'];
 
-        CacheHelper::put($cacheData, $authUlid, $cacheTags, null, now()->addMinutes(10));
+        CacheHelper::put($cacheData, $authUlid, $cacheTags, 10);
 
         $titles = Operation::where('type', 3)->where('code', 'title')->get();
 

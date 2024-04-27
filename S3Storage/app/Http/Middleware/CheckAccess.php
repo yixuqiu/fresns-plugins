@@ -101,7 +101,7 @@ class CheckAccess
         // plugin auth info
         $authUlid = (string) Str::ulid();
 
-        CacheHelper::put('S3Storage', $authUlid, 'fresnsPluginAuth', null, now()->addMinutes(15));
+        CacheHelper::put('S3Storage', $authUlid, 'fresnsPluginAuth', 15);
 
         Cookie::queue('fresns_plugin_s3_storage_platform_id', $fresnsResp->getData('platformId'));
         Cookie::queue('fresns_plugin_s3_storage_lang_tag', $langTag);

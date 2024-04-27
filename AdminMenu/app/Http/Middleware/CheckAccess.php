@@ -109,7 +109,7 @@ class CheckAccess
         // plugin auth info
         $authUlid = (string) Str::ulid();
 
-        CacheHelper::put('AdminMenu', $authUlid, 'fresnsPluginAuth', null, now()->addMinutes(15));
+        CacheHelper::put('AdminMenu', $authUlid, 'fresnsPluginAuth', 15);
 
         $viewType = $request->viewType ?? 'list';
 

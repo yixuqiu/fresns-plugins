@@ -111,7 +111,7 @@ class FileHelper
             }
 
             $cacheTime = FresnsCacheHelper::fresnsCacheTimeByFileType($file->type, null, 2);
-            FresnsCacheHelper::put($fileInfo, $cacheKey, $cacheTag, null, $cacheTime);
+            FresnsCacheHelper::put($fileInfo, $cacheKey, $cacheTag, $cacheTime);
         }
 
         return $fileInfo;

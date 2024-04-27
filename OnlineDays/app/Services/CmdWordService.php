@@ -59,7 +59,7 @@ class CmdWordService
             $todayLog = UserExtcreditsLog::where('user_id', $userId)->where('extcredits_id', $extcreditsId)->whereDate('created_at', date('Y-m-d'))->first();
 
             if ($todayLog) {
-                CacheHelper::put(now(), $cacheKey, $cacheTags, 10, $cacheExpiration);
+                CacheHelper::put(now(), $cacheKey, $cacheTags, $cacheExpiration, 10);
 
                 return $this->success();
             }
@@ -72,7 +72,7 @@ class CmdWordService
             ];
             \FresnsCmdWord::plugin('Fresns')->setUserExtcredits($extWordBody);
 
-            CacheHelper::put(now(), $cacheKey, $cacheTags, 10, $cacheExpiration);
+            CacheHelper::put(now(), $cacheKey, $cacheTags, $cacheExpiration, 10);
         }
 
         return $this->success();

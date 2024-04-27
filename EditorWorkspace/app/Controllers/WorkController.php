@@ -61,7 +61,7 @@ class WorkController extends Controller
         $authUlid = (string) Str::ulid();
         $cacheTags = ['fresnsPlugins', 'pluginEditorWorkspace', 'fresnsPluginAuth'];
 
-        CacheHelper::put($headers, $authUlid, $cacheTags, null, now()->addHours(2)); // valid for 2 hours
+        CacheHelper::put($headers, $authUlid, $cacheTags, 120); // valid for 2 hours
 
         return redirect()->to(route('editor-workspace.work.editor', [
             'authUlid' => $authUlid,
