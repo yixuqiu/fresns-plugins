@@ -147,7 +147,7 @@
                         </td>
                         <td><a href="{{ route('easy-manager.post.index', ['userId' => $user->profile->id]) }}">{{ $user->post_publish_count }}</a></td>
                         <td><a href="{{ route('easy-manager.comment.index', ['userId' => $user->profile->id]) }}">{{ $user->comment_publish_count }}</a></td>
-                        <td>{{ $user->follow_me_count }}</td>
+                        <td>{{ $user->follower_count }}</td>
                         <td>{{ $user->profile->expired_at }}</td>
                         <td>
                             @if ($user->profile->wait_delete)
