@@ -3,16 +3,16 @@
     "name": "Admin Menu",
     "description": "Fresns official development of easy to manage menu.",
     "author": "Fresns",
-    "authorLink": "https://fresns.org",
+    "website": "https://fresns.org",
     "version": "2.0.2",
-    "panelUsages": [
-        "extendManage"
-    ],
-    "accessPath": "/admin-menu?accessToken={accessToken}&callbackKey={postMessageKey}&viewType={viewType}&uid={uid}&pid={pid}&cid={cid}",
-    "settingsPath": null,
     "providers": [
         "Plugins\\AdminMenu\\Providers\\PluginServiceProvider"
     ],
     "autoloadFiles": [],
-    "aliases": {}
+    "aliases": {},
+    "panelUsages": [
+        "extendManage"
+    ],
+    "accessPath": "/admin-menu?accessToken={accessToken}&callbackKey={postMessageKey}&viewType={viewType}&uid={uid}&pid={pid}&cid={cid}",
+    "settingsPath": null
 }

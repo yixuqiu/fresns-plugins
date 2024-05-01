@@ -3,17 +3,17 @@
     "name": "S3 Storage",
     "description": "S3 storage, available from any storage service that supports the S3 protocol.",
     "author": "Fresns",
-    "authorLink": "https://fresns.org",
+    "website": "https://fresns.org",
     "version": "1.1.1",
-    "panelUsages": [
-        "storage"
-    ],
-    "accessPath": "/s3-storage/upload?accessToken={accessToken}&uploadInfo={uploadInfo}&postMessageKey={postMessageKey}",
-    "settingsPath": null,
     "providers": [
         "Plugins\\S3Storage\\Providers\\PluginServiceProvider",
         "Plugins\\S3Storage\\Providers\\CmdWordServiceProvider"
     ],
     "autoloadFiles": [],
-    "aliases": {}
+    "aliases": {},
+    "panelUsages": [
+        "storage"
+    ],
+    "accessPath": "/s3-storage/upload?accessToken={accessToken}&uploadInfo={uploadInfo}&postMessageKey={postMessageKey}",
+    "settingsPath": null
 }

@@ -3,17 +3,17 @@
     "name": "SMTP Email",
     "description": "Fresns official development of the SMTP sending method of mail plugin.",
     "author": "Fresns",
-    "authorLink": "https://fresns.org",
+    "website": "https://fresns.org",
     "version": "2.3.2",
-    "panelUsages": [
-        "sendEmail"
-    ],
-    "accessPath": null,
-    "settingsPath": "/smtp-email/settings",
     "providers": [
         "Plugins\\SmtpEmail\\Providers\\SmtpEmailServiceProvider",
         "Plugins\\SmtpEmail\\Providers\\CmdWordServiceProvider"
     ],
     "autoloadFiles": [],
-    "aliases": {}
+    "aliases": {},
+    "panelUsages": [
+        "sendEmail"
+    ],
+    "accessPath": null,
+    "settingsPath": "/smtp-email/settings"
 }

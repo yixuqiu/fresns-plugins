@@ -3,14 +3,14 @@
     "name": "Easy Manager",
     "description": "Fresns official development of easy management plug-in.",
     "author": "Fresns",
-    "authorLink": "https://fresns.org",
+    "website": "https://fresns.org",
     "version": "2.0.2",
-    "panelUsages": [],
-    "accessPath": null,
-    "settingsPath": "/easy-manager",
     "providers": [
         "Plugins\\EasyManager\\Providers\\EasyManagerServiceProvider"
     ],
     "autoloadFiles": [],
-    "aliases": {}
+    "aliases": {},
+    "panelUsages": [],
+    "accessPath": null,
+    "settingsPath": "/easy-manager"
 }

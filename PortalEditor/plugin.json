@@ -3,15 +3,15 @@
     "name": "Portal Editor",
     "description": "Edit the portal content code directly.",
     "author": "Fresns",
-    "authorLink": "https://fresns.org",
+    "website": "https://fresns.org",
     "version": "1.1.0",
-    "panelUsages": [],
-    "accessPath": null,
-    "settingsPath": "/portal-editor",
     "providers": [
         "Plugins\\PortalEditor\\Providers\\PortalEditorServiceProvider",
         "Plugins\\PortalEditor\\Providers\\CmdWordServiceProvider"
     ],
     "autoloadFiles": [],
-    "aliases": {}
+    "aliases": {},
+    "panelUsages": [],
+    "accessPath": null,
+    "settingsPath": "/portal-editor"
 }

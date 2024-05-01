@@ -3,15 +3,15 @@
     "name": "Subscribe Example",
     "description": "Subscribe example: Data table change, user activity, account and user login.",
     "author": "Fresns",
-    "authorLink": "https://fresns.org",
+    "website": "https://fresns.org",
     "version": "1.1.2",
-    "panelUsages": [],
-    "accessPath": null,
-    "settingsPath": null,
     "providers": [
         "Plugins\\SubscribeExample\\Providers\\SubscribeExampleServiceProvider",
         "Plugins\\SubscribeExample\\Providers\\CmdWordServiceProvider"
     ],
     "autoloadFiles": [],
-    "aliases": {}
+    "aliases": {},
+    "panelUsages": [],
+    "accessPath": null,
+    "settingsPath": null
 }
